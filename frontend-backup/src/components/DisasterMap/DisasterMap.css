@@ -1,0 +1,765 @@
+/* =====================================================
+   DISASTER MAP WRAPPER
+===================================================== */
+
+.disaster-map-wrapper {
+  width: 100%;
+  position: relative;
+  margin-top: 15px;
+}
+
+
+/* =====================================================
+   TOP CONTROLS
+===================================================== */
+
+.map-top-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+
+/* =====================================================
+   MAP STATUS
+===================================================== */
+
+.map-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  border: 1px solid transparent;
+}
+
+.map-status-online {
+  background: #ecfdf5;
+  color: #047857;
+  border-color: #a7f3d0;
+}
+
+.map-status-offline {
+  background: #fef2f2;
+  color: #b91c1c;
+  border-color: #fecaca;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  display: inline-block;
+}
+
+
+/* =====================================================
+   DOWNLOAD BUTTON
+===================================================== */
+
+.map-download-button {
+  border: none;
+  outline: none;
+  padding: 10px 16px;
+  border-radius: 9px;
+  background: #2563eb;
+  color: white;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 3px 8px rgba(37, 99, 235, 0.2);
+}
+
+.map-download-button:hover:not(:disabled) {
+  background: #1d4ed8;
+  transform: translateY(-1px);
+  box-shadow: 0 5px 12px rgba(37, 99, 235, 0.25);
+}
+
+.map-download-button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.map-download-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+  transform: none;
+}
+
+
+/* =====================================================
+   DOWNLOAD PROGRESS
+===================================================== */
+
+.map-download-progress {
+  width: 100%;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 10px;
+  padding: 10px 13px;
+  margin-bottom: 10px;
+  box-sizing: border-box;
+}
+
+.progress-bar-background {
+  width: 100%;
+  height: 7px;
+  background: #dbeafe;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 7px;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: #2563eb;
+  border-radius: 10px;
+  transition: width 0.2s ease;
+}
+
+.map-download-progress span {
+  font-size: 12px;
+  color: #1e40af;
+  font-weight: 600;
+}
+
+
+/* =====================================================
+   DOWNLOAD SUCCESS
+===================================================== */
+
+.map-download-success {
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+  padding: 10px 13px;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+
+/* =====================================================
+   DOWNLOAD ERROR
+===================================================== */
+
+.map-download-error {
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+  padding: 10px 13px;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+
+/* =====================================================
+   OFFLINE LOCATION INFORMATION
+===================================================== */
+
+.offline-location-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+
+  color: #9a3412;
+
+  padding: 10px 14px;
+  margin-bottom: 10px;
+
+  border-radius: 9px;
+
+  font-size: 13px;
+}
+
+.offline-location-info span {
+  font-family: monospace;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+
+/* =====================================================
+   MAP CONTAINER
+===================================================== */
+
+.disaster-map-container {
+  width: 100%;
+  height: 500px;
+  position: relative;
+
+  border-radius: 16px;
+  overflow: hidden;
+
+  border: 1px solid #e5e7eb;
+
+  background: #f3f4f6;
+
+  box-shadow: 0 5px 18px rgba(0, 0, 0, 0.08);
+}
+
+
+/* =====================================================
+   LEAFLET MAP
+===================================================== */
+
+.disaster-map {
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+
+/* =====================================================
+   CUSTOM MAP ICON
+===================================================== */
+
+.custom-map-icon {
+  background: transparent !important;
+  border: none !important;
+}
+
+
+/* =====================================================
+   USER LOCATION MARKER
+===================================================== */
+
+.user-location-marker {
+  width: 40px;
+  height: 40px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 30px;
+
+  background: white;
+
+  border-radius: 50%;
+
+  border: 3px solid #2563eb;
+
+  box-shadow:
+    0 3px 10px rgba(0, 0, 0, 0.25),
+    0 0 0 5px rgba(37, 99, 235, 0.15);
+
+  animation: userMarkerPulse 2s infinite;
+}
+
+@keyframes userMarkerPulse {
+  0% {
+    box-shadow:
+      0 3px 10px rgba(0, 0, 0, 0.25),
+      0 0 0 0 rgba(37, 99, 235, 0.35);
+  }
+
+  70% {
+    box-shadow:
+      0 3px 10px rgba(0, 0, 0, 0.25),
+      0 0 0 9px rgba(37, 99, 235, 0);
+  }
+
+  100% {
+    box-shadow:
+      0 3px 10px rgba(0, 0, 0, 0.25),
+      0 0 0 0 rgba(37, 99, 235, 0);
+  }
+}
+
+
+/* =====================================================
+   SAFE LOCATION MARKER
+===================================================== */
+
+.shelter-location-marker {
+  width: 40px;
+  height: 40px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 27px;
+
+  background: white;
+
+  border-radius: 50%;
+
+  border: 3px solid #16a34a;
+
+  box-shadow:
+    0 3px 10px rgba(0, 0, 0, 0.22);
+}
+
+
+/* =====================================================
+   SAFEST LOCATION MARKER
+===================================================== */
+
+.safest-location-marker {
+  width: 42px;
+  height: 42px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 29px;
+
+  background: white;
+
+  border-radius: 50%;
+
+  border: 3px solid #7c3aed;
+
+  box-shadow:
+    0 3px 10px rgba(0, 0, 0, 0.25),
+    0 0 0 4px rgba(124, 58, 237, 0.12);
+}
+
+
+/* =====================================================
+   MAP POPUP
+===================================================== */
+
+.map-popup {
+  min-width: 190px;
+
+  color: #1f2937;
+
+  font-size: 13px;
+
+  line-height: 1.6;
+}
+
+.map-popup strong {
+  color: #111827;
+  font-size: 14px;
+}
+
+.map-popup hr {
+  border: none;
+  border-top: 1px solid #e5e7eb;
+  margin: 7px 0;
+}
+
+.popup-title {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.popup-offline {
+  margin: 8px 0 0;
+
+  padding: 6px 8px;
+
+  background: #fef2f2;
+
+  color: #b91c1c;
+
+  border-radius: 5px;
+
+  font-size: 11px;
+
+  font-weight: 600;
+}
+
+
+/* =====================================================
+   SAFEST POPUP
+===================================================== */
+
+.safest-popup {
+  min-width: 220px;
+}
+
+.popup-recommended {
+  margin-top: 9px;
+
+  padding: 7px 9px;
+
+  background: #f5f3ff;
+
+  color: #6d28d9;
+
+  border-radius: 6px;
+
+  font-size: 11px;
+
+  font-weight: 700;
+}
+
+
+/* =====================================================
+   MAP LEGEND
+===================================================== */
+
+.map-legend {
+  background: white;
+
+  border: 1px solid #e5e7eb;
+
+  border-radius: 10px;
+
+  padding: 11px 14px;
+
+  margin-top: 10px;
+
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.legend-title {
+  font-size: 12px;
+  font-weight: 700;
+
+  color: #374151;
+
+  margin-bottom: 8px;
+}
+
+.legend-items {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+
+  flex-wrap: wrap;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  color: #4b5563;
+
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.legend-icon {
+  font-size: 18px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+
+/* =====================================================
+   OFFLINE MAP MESSAGE
+===================================================== */
+
+.offline-map-message {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+
+  margin-top: 10px;
+
+  padding: 13px 15px;
+
+  background: #fff7ed;
+
+  border: 1px solid #fed7aa;
+
+  border-radius: 10px;
+
+  color: #9a3412;
+}
+
+.offline-map-icon {
+  font-size: 24px;
+  line-height: 1;
+}
+
+.offline-map-message strong {
+  display: block;
+
+  font-size: 14px;
+
+  color: #9a3412;
+
+  margin-bottom: 3px;
+}
+
+.offline-map-message p {
+  margin: 0;
+
+  font-size: 12px;
+
+  line-height: 1.5;
+
+  color: #7c2d12;
+}
+
+.offline-map-message .offline-warning {
+  margin-top: 7px;
+
+  font-weight: 600;
+}
+
+
+/* =====================================================
+   OFFLINE MAP INFORMATION
+===================================================== */
+
+.offline-map-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  margin-top: 10px;
+
+  padding: 10px 13px;
+
+  background: #f0fdf4;
+
+  border: 1px solid #bbf7d0;
+
+  border-radius: 9px;
+
+  color: #166534;
+}
+
+.offline-map-info > span {
+  font-size: 21px;
+}
+
+.offline-map-info strong {
+  display: block;
+
+  font-size: 12px;
+
+  margin-bottom: 2px;
+}
+
+.offline-map-info small {
+  display: block;
+
+  font-size: 11px;
+
+  color: #15803d;
+}
+
+
+/* =====================================================
+   MAP LOADING
+===================================================== */
+
+.map-loading {
+  min-height: 400px;
+
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: center;
+
+  justify-content: center;
+
+  text-align: center;
+
+  background: #f9fafb;
+
+  border: 1px solid #e5e7eb;
+
+  border-radius: 16px;
+
+  padding: 30px;
+}
+
+.map-loading-icon {
+  width: 70px;
+  height: 70px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 40px;
+
+  background: #eff6ff;
+
+  border-radius: 50%;
+
+  margin-bottom: 15px;
+}
+
+.map-loading h3 {
+  margin: 0 0 6px;
+
+  color: #1f2937;
+
+  font-size: 18px;
+}
+
+.map-loading p {
+  margin: 0;
+
+  color: #6b7280;
+
+  font-size: 13px;
+}
+
+
+/* =====================================================
+   LEAFLET CONTROLS
+===================================================== */
+
+.disaster-map .leaflet-control-zoom {
+  border: none !important;
+
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.18);
+}
+
+.disaster-map .leaflet-control-zoom a {
+  color: #374151;
+
+  background: white;
+
+  border-color: #e5e7eb;
+
+  font-weight: 700;
+}
+
+.disaster-map .leaflet-control-zoom a:hover {
+  background: #f3f4f6;
+}
+
+
+/* =====================================================
+   LEAFLET ATTRIBUTION
+===================================================== */
+
+.disaster-map .leaflet-control-attribution {
+  font-size: 9px;
+
+  background: rgba(255, 255, 255, 0.9);
+}
+
+
+/* =====================================================
+   MOBILE RESPONSIVE
+===================================================== */
+
+@media (max-width: 768px) {
+
+  .map-top-controls {
+    flex-direction: column;
+
+    align-items: stretch;
+  }
+
+  .map-status {
+    justify-content: center;
+  }
+
+  .map-download-button {
+    width: 100%;
+  }
+
+  .disaster-map-container {
+    height: 430px;
+
+    border-radius: 12px;
+  }
+
+  .offline-location-info {
+    flex-direction: column;
+
+    align-items: flex-start;
+
+    gap: 4px;
+  }
+
+  .legend-items {
+    gap: 12px;
+  }
+
+}
+
+
+/* =====================================================
+   SMALL MOBILE
+===================================================== */
+
+@media (max-width: 480px) {
+
+  .disaster-map-container {
+    height: 380px;
+  }
+
+  .map-status {
+    width: 100%;
+
+    box-sizing: border-box;
+
+    justify-content: center;
+  }
+
+  .map-download-button {
+    font-size: 12px;
+
+    padding: 10px 12px;
+  }
+
+  .offline-map-message {
+    padding: 11px;
+  }
+
+  .offline-map-message p {
+    font-size: 11px;
+  }
+
+  .map-legend {
+    padding: 10px;
+  }
+
+  .legend-items {
+    flex-direction: column;
+
+    align-items: flex-start;
+
+    gap: 7px;
+  }
+
+  .user-location-marker {
+    width: 36px;
+    height: 36px;
+
+    font-size: 27px;
+  }
+
+  .shelter-location-marker {
+    width: 36px;
+    height: 36px;
+
+    font-size: 25px;
+  }
+
+  .safest-location-marker {
+    width: 38px;
+    height: 38px;
+
+    font-size: 26px;
+  }
+
+}
