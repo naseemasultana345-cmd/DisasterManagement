@@ -8,7 +8,7 @@ import axios from "axios";
 import "./SOSButton.css";
 
 const API_BASE_URL =
-  "http://localhost:8080/api";
+  "https://disastermanagement-gzg8.onrender.com/api";
 
 const OFFLINE_SOS_KEY =
   "pendingSOSRequests";

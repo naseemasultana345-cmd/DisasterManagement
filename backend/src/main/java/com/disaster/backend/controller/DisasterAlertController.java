@@ -8,7 +8,10 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/disaster-alert")
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = {
+        "http://localhost:5173",
+        "https://disaster-management-pink-seven.vercel.app"
+})
 public class DisasterAlertController {
 
     private final DisasterAlertService disasterAlertService;

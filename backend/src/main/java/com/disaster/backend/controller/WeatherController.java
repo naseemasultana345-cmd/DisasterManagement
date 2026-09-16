@@ -12,7 +12,10 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/weather")
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = {
+        "http://localhost:5173",
+        "https://disaster-management-pink-seven.vercel.app"
+})
 public class WeatherController {
 
     @Value("${openweather.api.key}")

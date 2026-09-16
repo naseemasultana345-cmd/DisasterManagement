@@ -16,7 +16,7 @@ import {
 } from "../../firebaseMessaging";
 
 const API_BASE_URL =
-  "http://localhost:8080/api";
+  "https://disastermanagement-gzg8.onrender.com/api";
 
 const MAX_DISTANCE_KM = 2;
 

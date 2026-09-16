@@ -125,7 +125,7 @@ public class SecurityConfig {
                         )
 
                         .defaultSuccessUrl(
-                                "http://localhost:5173/dashboard",
+                                "https://disaster-management-pink-seven.vercel.app/dashboard",
                                 true
                         )
                 )

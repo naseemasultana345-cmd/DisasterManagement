@@ -36,7 +36,7 @@ function Login() {
     setLoading(true);
 
     try {
-      const response = await fetch("http://localhost:8080/api/auth/login", {
+      const response = await fetch("https://disastermanagement-gzg8.onrender.com/api/auth/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -75,7 +75,7 @@ function Login() {
 
   const handleGoogleLogin = () => {
     window.location.href =
-      "http://localhost:8080/oauth2/authorization/google";
+      "https://disastermanagement-gzg8.onrender.com/oauth2/authorization/google";
   };
 
   // =========================================
@@ -84,7 +84,7 @@ function Login() {
 
   const handleGithubLogin = () => {
     window.location.href =
-      "http://localhost:8080/oauth2/authorization/github";
+      "https://disastermanagement-gzg8.onrender.com/oauth2/authorization/github";
   };
 
   return (

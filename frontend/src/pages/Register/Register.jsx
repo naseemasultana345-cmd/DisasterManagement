@@ -54,7 +54,7 @@ function Register() {
 
     try {
       const response = await fetch(
-        "http://localhost:8080/api/auth/register",
+        "https://disastermanagement-gzg8.onrender.com/api/auth/register",
         {
           method: "POST",
           headers: {
