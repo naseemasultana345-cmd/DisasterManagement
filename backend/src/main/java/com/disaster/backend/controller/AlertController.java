@@ -1,3 +1,4 @@
+
 package com.disaster.backend.controller;
 
 import com.disaster.backend.entity.Alert;
@@ -23,18 +24,22 @@ public class AlertController {
 
     @GetMapping
     public ResponseEntity<List<Alert>> getAllAlerts() {
-        return ResponseEntity.ok(alertService.getAllAlerts());
+        return ResponseEntity.ok(
+                alertService.getAllAlerts()
+        );
     }
 
     @GetMapping("/active")
     public ResponseEntity<List<Alert>> getActiveAlerts() {
-        return ResponseEntity.ok(alertService.getActiveAlerts());
+        return ResponseEntity.ok(
+                alertService.getActiveAlerts()
+        );
     }
 
     @PostMapping
     public ResponseEntity<Alert> createAlert(
-            @RequestBody Alert alert) {
-
+            @RequestBody Alert alert
+    ) {
         return ResponseEntity.ok(
                 alertService.createAlert(alert)
         );
@@ -42,10 +47,12 @@ public class AlertController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteAlert(
-            @PathVariable Long id) {
-
+            @PathVariable Long id
+    ) {
         alertService.deleteAlert(id);
 
-        return ResponseEntity.ok("Alert deleted successfully");
+        return ResponseEntity.ok(
+                "Alert deleted successfully"
+        );
     }
 }

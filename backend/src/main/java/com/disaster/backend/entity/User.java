@@ -1,3 +1,4 @@
+
 package com.disaster.backend.entity;
 
 import jakarta.persistence.*;
@@ -68,3 +69,4 @@ public class User {
         this.password = password;
     }
 }
+
