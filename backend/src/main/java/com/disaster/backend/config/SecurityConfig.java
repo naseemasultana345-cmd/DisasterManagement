@@ -140,7 +140,7 @@ public class SecurityConfig {
                         .removeAttribute("WEB_OAUTH");
 
                 response.sendRedirect(
-                        "http://localhost:5173/dashboard"
+                        "https://disaster-management-pink-seven.vercel.app/dashboard"
                 );
 
                 return;
