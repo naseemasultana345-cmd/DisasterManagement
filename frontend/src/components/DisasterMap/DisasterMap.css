@@ -1768,3 +1768,71 @@
   }
 
 }
+
+/* =====================================================
+   DASHBOARD MAP POLISH
+===================================================== */
+
+.disaster-map-container {
+  height: 560px;
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.disaster-map {
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+}
+
+.disaster-map-wrapper {
+  margin-top: 0;
+}
+
+/* Keep the single status as the main map information banner. */
+.map-download-success,
+.offline-map-info {
+  display: none;
+}
+
+/* Stronger visual priority for the safest location marker. */
+.safest-location-marker {
+  width: 48px;
+  height: 48px;
+  font-size: 32px;
+  border-width: 3px;
+  box-shadow:
+    0 4px 12px rgba(0,0,0,.26),
+    0 0 0 6px rgba(124,58,237,.14);
+}
+
+
+/* Make the map status and key information easier to read. */
+.map-status {
+  font-size: 13px;
+}
+
+.offline-location-info,
+.weather-service-info,
+.service-summary,
+.map-legend {
+  font-size: 12px;
+}
+
+@media (max-width: 768px) {
+  .disaster-map-container {
+    height: 500px;
+  }
+}
+
+@media (max-width: 480px) {
+  .disaster-map-container {
+    height: 440px;
+  }
+
+  .safest-location-marker {
+    width: 42px;
+    height: 42px;
+    font-size: 29px;
+  }
+}

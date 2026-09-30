@@ -225,6 +225,14 @@ function MapController({
     useMap();
 
   useEffect(() => {
+    const timer = setTimeout(() => {
+      map.invalidateSize();
+    }, 250);
+
+    return () => clearTimeout(timer);
+  }, [map]);
+
+  useEffect(() => {
 
     if (!location) {
       return;
@@ -310,7 +318,7 @@ function RouteMapController({
             50,
           ],
 
-          maxZoom: 16,
+          maxZoom: 17,
 
           animate: true,
         }
@@ -2522,7 +2530,8 @@ function DisasterMap({
           SUCCESS
       ============================================== */}
 
-      {!offlineMode &&
+      {false &&
+        !offlineMode &&
         downloadState ===
           "downloaded" && (
 
@@ -2571,17 +2580,7 @@ function DisasterMap({
           </div>
 
           <span>
-
-            {Number(
-              userLocation.latitude
-            ).toFixed(5)}
-
-            {" , "}
-
-            {Number(
-              userLocation.longitude
-            ).toFixed(5)}
-
+            GPS location saved on this device
           </span>
 
         </div>
@@ -2961,21 +2960,9 @@ function DisasterMap({
                   📍 Your Location
                 </strong>
 
-                <br />
-
-                Latitude:
-                {" "}
-                {Number(
-                  userLocation.latitude
-                ).toFixed(6)}
-
-                <br />
-
-                Longitude:
-                {" "}
-                {Number(
-                  userLocation.longitude
-                ).toFixed(6)}
+                <p style={{ margin: "6px 0 0" }}>
+                  GPS location is available for safety services.
+                </p>
 
                 {!isOnline && (
 
@@ -3702,8 +3689,8 @@ function DisasterMap({
           SERVICE INFORMATION
       ============================================== */}
 
-      {(showFoodServices ||
-        showPoliceServices) && (
+      {(validFoodServices.length > 0 ||
+        validPoliceServices.length > 0) && (
 
         <div className="service-summary">
 
@@ -3801,7 +3788,7 @@ function DisasterMap({
           OFFLINE MAP INFORMATION
       ============================================== */}
 
-      {hasOfflineMap && (
+      {false && hasOfflineMap && (
 
         <div className="offline-map-info">
 
