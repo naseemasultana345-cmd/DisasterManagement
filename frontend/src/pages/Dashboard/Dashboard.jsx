@@ -10,15 +10,10 @@ import "./Dashboard.css";
 
 import DisasterMap from "../../components/DisasterMap/DisasterMap";
 import SOSButton from "../../components/SOS/SOSButton";
-
 import {
   requestNotificationPermission,
   listenForMessages,
 } from "../../firebaseMessaging";
-
-// =====================================================
-// API CONFIGURATION
-// =====================================================
 
 const API_BASE_URL =
   "https://disastermanagement-gzg8.onrender.com/api";
@@ -36,13 +31,6 @@ const WEATHER_CACHE_TIME_KEY =
   "latestWeatherUpdatedAt";
 
 // =====================================================
-// DISASTER ALERT CACHE
-// =====================================================
-
-const DISASTER_ALERT_CACHE_KEY =
-  "latestDisasterAlert";
-
-// =====================================================
 // SAFE LOCATION CACHE
 // =====================================================
 
@@ -53,7 +41,7 @@ const ROAD_DISTANCE_CACHE_KEY =
   "safeLocationRoadDistances";
 
 // =====================================================
-// OSRM ROAD ROUTING
+// ROAD ROUTING
 // =====================================================
 
 const OSRM_URL =
@@ -79,8 +67,12 @@ function calculateDistanceKm(
 
   const a =
     Math.sin(dLat / 2) ** 2 +
-    Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
+    Math.cos(
+      (lat1 * Math.PI) / 180
+    ) *
+      Math.cos(
+        (lat2 * Math.PI) / 180
+      ) *
       Math.sin(dLon / 2) ** 2;
 
   return (
@@ -94,11 +86,13 @@ function calculateDistanceKm(
 }
 
 // =====================================================
-// DISASTER NORMALIZATION
+// NORMALIZE DISASTER TYPE
 // =====================================================
 
 function normalizeDisasterType(type) {
-  if (!type) return null;
+  if (!type) {
+    return null;
+  }
 
   const value =
     String(type)
@@ -122,18 +116,11 @@ function normalizeDisasterType(type) {
     return "Heavy Rain";
   }
 
-  if (
-    value === "thunderstorm" ||
-    value === "thunder storm"
-  ) {
-    return "Thunderstorm";
-  }
-
   return type;
 }
 
 // =====================================================
-// SERVICE NORMALIZATION
+// SERVICE TYPE
 // =====================================================
 
 function normalizeServiceType(type) {
@@ -150,16 +137,24 @@ function normalizeServiceType(type) {
     return "FOOD";
   }
 
-  if (value.includes("police")) {
+  if (
+    value.includes("police")
+  ) {
     return "POLICE";
   }
 
   return "";
 }
 
+// =====================================================
+// CHECK SERVICE LOCATION
+// =====================================================
+
 function isServiceLocation(location) {
   const serviceType =
-    normalizeServiceType(location?.type);
+    normalizeServiceType(
+      location?.type
+    );
 
   return (
     serviceType === "FOOD" ||
@@ -178,7 +173,8 @@ function getWeatherCondition(
   const description =
     String(
       weather?.description ??
-        weather?.weather?.[0]?.description ??
+        weather?.weather?.[0]
+          ?.description ??
         ""
     ).toLowerCase();
 
@@ -189,19 +185,28 @@ function getWeatherCondition(
     );
 
   if (
-    description.includes("thunderstorm") ||
-    description.includes("storm")
+    description.includes(
+      "thunderstorm"
+    ) ||
+    description.includes(
+      "storm"
+    )
   ) {
     return "Thunderstorm";
   }
 
   if (
-    disasterType === "Extreme Heat" ||
+    disasterType ===
+      "Extreme Heat" ||
     description.includes("heat") ||
     description.includes("hot") ||
-    description.includes("scorching") ||
+    description.includes(
+      "scorching"
+    ) ||
     (
-      Number.isFinite(temperature) &&
+      Number.isFinite(
+        temperature
+      ) &&
       temperature >= 40
     )
   ) {
@@ -209,12 +214,23 @@ function getWeatherCondition(
   }
 
   if (
-    disasterType === "Heavy Rain" ||
-    description.includes("very heavy rain") ||
-    description.includes("heavy rain") ||
-    description.includes("rain") ||
-    description.includes("drizzle") ||
-    description.includes("shower")
+    disasterType ===
+      "Heavy Rain" ||
+    description.includes(
+      "very heavy rain"
+    ) ||
+    description.includes(
+      "heavy rain"
+    ) ||
+    description.includes(
+      "rain"
+    ) ||
+    description.includes(
+      "drizzle"
+    ) ||
+    description.includes(
+      "shower"
+    )
   ) {
     return "Heavy Rain";
   }
@@ -231,11 +247,25 @@ function getHeatSafetyScore(location) {
     String(location?.type || "")
       .toLowerCase();
 
-  if (type.includes("hospital")) return 100;
-  if (type.includes("shelter")) return 90;
-  if (type.includes("school")) return 80;
-  if (type.includes("community")) return 80;
-  if (type.includes("building")) return 70;
+  if (type.includes("hospital")) {
+    return 100;
+  }
+
+  if (type.includes("shelter")) {
+    return 90;
+  }
+
+  if (type.includes("school")) {
+    return 80;
+  }
+
+  if (type.includes("community")) {
+    return 80;
+  }
+
+  if (type.includes("building")) {
+    return 70;
+  }
 
   return 50;
 }
@@ -245,11 +275,7 @@ function getHeatSafetyScore(location) {
 // =====================================================
 
 function formatDistance(distance) {
-  if (distance == null) return "—";
-
-  if (
-    !Number.isFinite(Number(distance))
-  ) {
+  if (distance == null) {
     return "—";
   }
 
@@ -263,11 +289,13 @@ function formatDistance(distance) {
 }
 
 // =====================================================
-// FORMAT WEATHER TIME
+// FORMAT WEATHER LAST UPDATED
 // =====================================================
 
 function formatWeatherTime(dateValue) {
-  if (!dateValue) return "";
+  if (!dateValue) {
+    return "";
+  }
 
   try {
     const date =
@@ -275,7 +303,11 @@ function formatWeatherTime(dateValue) {
         ? dateValue
         : new Date(dateValue);
 
-    if (Number.isNaN(date.getTime())) {
+    if (
+      Number.isNaN(
+        date.getTime()
+      )
+    ) {
       return "";
     }
 
@@ -295,7 +327,7 @@ function formatWeatherTime(dateValue) {
 }
 
 // =====================================================
-// REMOVE DUPLICATE LOCATIONS
+// UNIQUE LOCATIONS
 // =====================================================
 
 function removeDuplicateLocations(
@@ -304,27 +336,41 @@ function removeDuplicateLocations(
   return locations.filter(
     (location, index, array) =>
       index ===
-      array.findIndex((item) => {
-        if (
-          item.id != null &&
-          location.id != null
-        ) {
-          return item.id === location.id;
-        }
+      array.findIndex(
+        (item) => {
+          if (
+            item.id != null &&
+            location.id != null
+          ) {
+            return (
+              item.id ===
+              location.id
+            );
+          }
 
-        return (
-          item.name === location.name &&
-          Number(item.latitude) ===
-            Number(location.latitude) &&
-          Number(item.longitude) ===
-            Number(location.longitude)
-        );
-      })
+          return (
+            item.name ===
+              location.name &&
+            Number(
+              item.latitude
+            ) ===
+              Number(
+                location.latitude
+              ) &&
+            Number(
+              item.longitude
+            ) ===
+              Number(
+                location.longitude
+              )
+          );
+        }
+      )
   );
 }
 
 // =====================================================
-// ROAD DISTANCE CACHE
+// ROAD DISTANCE CACHE HELPERS
 // =====================================================
 
 function getRoadDistanceCache() {
@@ -334,7 +380,9 @@ function getRoadDistanceCache() {
         ROAD_DISTANCE_CACHE_KEY
       );
 
-    if (!saved) return {};
+    if (!saved) {
+      return {};
+    }
 
     const parsed =
       JSON.parse(saved);
@@ -347,6 +395,10 @@ function getRoadDistanceCache() {
     return {};
   }
 }
+
+// =====================================================
+// ROAD DISTANCE CACHE KEY
+// =====================================================
 
 function createRoadDistanceKey(
   startLatitude,
@@ -363,7 +415,7 @@ function createRoadDistanceKey(
 }
 
 // =====================================================
-// OSRM ROAD DISTANCE
+// GET ROAD DISTANCE USING OSRM
 // =====================================================
 
 async function getRoadDistance(
@@ -378,22 +430,38 @@ async function getRoadDistance(
   }
 
   const startLatitude =
-    Number(userLocation.latitude);
+    Number(
+      userLocation.latitude
+    );
 
   const startLongitude =
-    Number(userLocation.longitude);
+    Number(
+      userLocation.longitude
+    );
 
   const endLatitude =
-    Number(destination.latitude);
+    Number(
+      destination.latitude
+    );
 
   const endLongitude =
-    Number(destination.longitude);
+    Number(
+      destination.longitude
+    );
 
   if (
-    !Number.isFinite(startLatitude) ||
-    !Number.isFinite(startLongitude) ||
-    !Number.isFinite(endLatitude) ||
-    !Number.isFinite(endLongitude)
+    !Number.isFinite(
+      startLatitude
+    ) ||
+    !Number.isFinite(
+      startLongitude
+    ) ||
+    !Number.isFinite(
+      endLatitude
+    ) ||
+    !Number.isFinite(
+      endLongitude
+    )
   ) {
     return null;
   }
@@ -422,10 +490,13 @@ async function getRoadDistance(
         Number(
           cache[cacheKey].distance
         ),
+
       duration:
         Number(
-          cache[cacheKey].duration || 0
+          cache[cacheKey].duration ||
+            0
         ),
+
       fromCache: true,
     };
   }
@@ -438,17 +509,23 @@ async function getRoadDistance(
       `?overview=false`;
 
     const response =
-      await axios.get(url, {
-        timeout: 8000,
-      });
+      await axios.get(
+        url,
+        {
+          timeout: 8000,
+        }
+      );
 
     const route =
       response.data?.routes?.[0];
 
-    if (!route) return null;
+    if (!route) {
+      return null;
+    }
 
     const roadDistance =
-      Number(route.distance) / 1000;
+      Number(route.distance) /
+      1000;
 
     const duration =
       Number(route.duration);
@@ -465,8 +542,11 @@ async function getRoadDistance(
       getRoadDistanceCache();
 
     updatedCache[cacheKey] = {
-      distance: roadDistance,
+      distance:
+        roadDistance,
+
       duration,
+
       savedAt:
         new Date().toISOString(),
     };
@@ -479,11 +559,15 @@ async function getRoadDistance(
     );
 
     return {
-      distance: roadDistance,
+      distance:
+        roadDistance,
+
       duration,
+
       fromCache: false,
     };
   } catch (error) {
+
     console.error(
       "Road distance error:",
       error
@@ -498,33 +582,66 @@ async function getRoadDistance(
 // =====================================================
 
 function Dashboard() {
-  const [userLocation, setUserLocation] =
-    useState(null);
 
-  const [isOnline, setIsOnline] =
-    useState(
-      typeof navigator !==
-        "undefined"
-        ? navigator.onLine
-        : true
-    );
+  // ===================================================
+  // LOCATION
+  // ===================================================
 
-  const [alert, setAlert] =
-    useState(null);
+  const [
+    userLocation,
+    setUserLocation,
+  ] = useState(null);
 
-  const [loadingAlert, setLoadingAlert] =
-    useState(true);
+  // ===================================================
+  // INTERNET
+  // ===================================================
 
-  const [weather, setWeather] =
-    useState(null);
+  const [
+    isOnline,
+    setIsOnline,
+  ] = useState(
+    typeof navigator !==
+      "undefined"
+      ? navigator.onLine
+      : true
+  );
 
-  const [loadingWeather, setLoadingWeather] =
-    useState(false);
+  // ===================================================
+  // ALERT
+  // ===================================================
+
+  const [
+    alert,
+    setAlert,
+  ] = useState(null);
+
+  const [
+    loadingAlert,
+    setLoadingAlert,
+  ] = useState(true);
+
+  // ===================================================
+  // WEATHER
+  // ===================================================
+
+  const [
+    weather,
+    setWeather,
+  ] = useState(null);
+
+  const [
+    loadingWeather,
+    setLoadingWeather,
+  ] = useState(false);
 
   const [
     weatherLastUpdated,
     setWeatherLastUpdated,
   ] = useState(null);
+
+  // ===================================================
+  // SAFE LOCATIONS
+  // ===================================================
 
   const [
     safestLocations,
@@ -541,10 +658,18 @@ function Dashboard() {
     setLoadingLocations,
   ] = useState(false);
 
+  // ===================================================
+  // MAIN MAP SELECTED LOCATION
+  // ===================================================
+
   const [
     selectedShelter,
     setSelectedShelter,
   ] = useState(null);
+
+  // ===================================================
+  // SECOND MAP SELECTED LOCATION
+  // ===================================================
 
   const [
     selectedOfflineLocation,
@@ -552,15 +677,18 @@ function Dashboard() {
   ] = useState(null);
 
   // ===================================================
-  // ONLINE / OFFLINE
+  // ONLINE / OFFLINE LISTENER
   // ===================================================
 
   useEffect(() => {
-    const handleOnline = () =>
-      setIsOnline(true);
 
-    const handleOffline = () =>
+    const handleOnline = () => {
+      setIsOnline(true);
+    };
+
+    const handleOffline = () => {
       setIsOnline(false);
+    };
 
     window.addEventListener(
       "online",
@@ -573,6 +701,7 @@ function Dashboard() {
     );
 
     return () => {
+
       window.removeEventListener(
         "online",
         handleOnline
@@ -582,111 +711,96 @@ function Dashboard() {
         "offline",
         handleOffline
       );
+
     };
+
   }, []);
 
   // ===================================================
-  // FIREBASE NOTIFICATIONS
+  // FIREBASE PUSH NOTIFICATIONS
   // ===================================================
 
-  const enableFirebaseNotifications =
-    async () => {
-      try {
-        const token =
-          await requestNotificationPermission();
+  const enableFirebaseNotifications = async () => {
 
-        if (token) {
-          console.log(
-            "================================="
-          );
+    try {
 
-          console.log(
-            "FCM TOKEN RECEIVED:"
-          );
+      const token =
+        await requestNotificationPermission();
 
-          console.log(token);
+      if (token) {
 
-          console.log(
-            "================================="
-          );
-        }
-      } catch (error) {
-        console.error(
-          "Firebase notification setup error:",
-          error
-        );
+        console.log("=================================");
+        console.log("FCM TOKEN RECEIVED:");
+        console.log(token);
+        console.log("=================================");
+
+        // The FCM token will be sent to Spring Boot
+        // and stored in MySQL in the next backend step.
       }
-    };
 
-  useEffect(() => {
-    const unsubscribe =
-      listenForMessages(
-        (payload) => {
-          console.log(
-            "================================="
-          );
+    } catch (error) {
 
-          console.log(
-            "FOREGROUND FIREBASE NOTIFICATION:"
-          );
-
-          console.log(payload);
-
-          console.log(
-            "================================="
-          );
-
-          const title =
-            payload?.notification
-              ?.title ||
-            payload?.data?.title ||
-            "Disaster Alert";
-
-          const body =
-            payload?.notification
-              ?.body ||
-            payload?.data?.body ||
-            "A new emergency alert has been received.";
-
-          if (
-            typeof Notification !==
-              "undefined" &&
-            Notification.permission ===
-              "granted"
-          ) {
-            new Notification(
-              title,
-              {
-                body,
-                icon:
-                  "/firebase-logo.png",
-                data:
-                  payload?.data || {},
-              }
-            );
-          }
-        }
+      console.error(
+        "Firebase notification setup error:",
+        error
       );
 
+    }
+
+  };
+
+  useEffect(() => {
+
+    const unsubscribe = listenForMessages((payload) => {
+
+      console.log("=================================");
+      console.log("FOREGROUND FIREBASE NOTIFICATION:");
+      console.log(payload);
+      console.log("=================================");
+
+      const title =
+        payload?.notification?.title ||
+        payload?.data?.title ||
+        "Disaster Alert";
+
+      const body =
+        payload?.notification?.body ||
+        payload?.data?.body ||
+        "A new emergency alert has been received.";
+
+      if (Notification.permission === "granted") {
+
+        new Notification(title, {
+          body,
+          icon: "/firebase-logo.png",
+          data: payload?.data || {},
+        });
+
+      }
+
+    });
+
     return () => {
-      if (
-        typeof unsubscribe ===
-        "function"
-      ) {
+
+      if (typeof unsubscribe === "function") {
         unsubscribe();
       }
+
     };
+
   }, []);
 
   // ===================================================
-  // GET LOCATION
+  // GET USER LOCATION
   // ===================================================
 
   const getLocation =
     useCallback(() => {
+
       if (
         !navigator.geolocation
       ) {
+
         window.alert(
           "Geolocation is not supported by this browser."
         );
@@ -695,15 +809,17 @@ function Dashboard() {
       }
 
       navigator.geolocation.getCurrentPosition(
+
         (position) => {
+
           const location = {
+
             latitude:
-              position.coords
-                .latitude,
+              position.coords.latitude,
 
             longitude:
-              position.coords
-                .longitude,
+              position.coords.longitude,
+
           };
 
           setUserLocation(
@@ -716,9 +832,11 @@ function Dashboard() {
               location
             )
           );
+
         },
 
         (error) => {
+
           console.error(
             "Location error:",
             error
@@ -730,69 +848,95 @@ function Dashboard() {
             );
 
           if (savedLocation) {
+
             try {
+
               setUserLocation(
                 JSON.parse(
                   savedLocation
                 )
               );
+
             } catch {
+
               setUserLocation(
                 null
               );
+
             }
+
           } else {
+
             window.alert(
               "Unable to get your location. Please allow location access."
             );
+
           }
+
         },
 
         {
-          enableHighAccuracy:
-            true,
-
+          enableHighAccuracy: true,
           timeout: 10000,
-
           maximumAge: 30000,
         }
+
       );
+
     }, []);
 
+  // ===================================================
+  // INITIAL LOCATION
+  // ===================================================
+
   useEffect(() => {
+
     const savedLocation =
       localStorage.getItem(
         "lastKnownLocation"
       );
 
     if (savedLocation) {
+
       try {
+
         setUserLocation(
           JSON.parse(
             savedLocation
           )
         );
+
       } catch {
+
         getLocation();
+
       }
+
     } else {
+
       getLocation();
+
     }
+
   }, [getLocation]);
 
   // ===================================================
-  // LATEST DISASTER ALERT
+  // GET LATEST ALERT
   // ===================================================
 
   const getLatestAlert =
     useCallback(async () => {
+
       try {
+
         setLoadingAlert(true);
 
         if (!navigator.onLine) {
+
           throw new Error(
             "Offline"
           );
+
         }
 
         const response =
@@ -809,12 +953,18 @@ function Dashboard() {
         setAlert(data);
 
         if (data) {
+
           localStorage.setItem(
-            DISASTER_ALERT_CACHE_KEY,
-            JSON.stringify(data)
+            "latestDisasterAlert",
+            JSON.stringify(
+              data
+            )
           );
+
         }
+
       } catch (error) {
+
         console.error(
           "Alert loading error:",
           error
@@ -822,60 +972,81 @@ function Dashboard() {
 
         const savedAlert =
           localStorage.getItem(
-            DISASTER_ALERT_CACHE_KEY
+            "latestDisasterAlert"
           );
 
         if (savedAlert) {
+
           try {
+
             setAlert(
               JSON.parse(
                 savedAlert
               )
             );
+
           } catch {
+
             setAlert(null);
+
           }
+
         }
+
       } finally {
+
         setLoadingAlert(false);
+
       }
+
     }, []);
 
+  // ===================================================
+  // LOAD ALERT
+  // ===================================================
+
   useEffect(() => {
+
     getLatestAlert();
-  }, [getLatestAlert]);
+
+  }, [
+    getLatestAlert,
+  ]);
 
   // ===================================================
-  // SAFEST LOCATIONS
+  // GET SAFEST LOCATIONS
   // ===================================================
 
   const getSafestLocations =
     useCallback(async () => {
+
       if (!userLocation) {
         return;
       }
 
       try {
+
         setLoadingLocations(
           true
         );
 
         let locations = [];
 
+        // ---------------------------------------------
+        // OFFLINE
+        // ---------------------------------------------
+
         if (!isOnline) {
+
           const savedLocations =
             localStorage.getItem(
               SAFE_LOCATIONS_CACHE_KEY
             );
 
           if (!savedLocations) {
-            setSafestLocations(
-              []
-            );
 
-            setAllSafeLocations(
-              []
-            );
+            setSafestLocations([]);
+            setAllSafeLocations([]);
 
             return;
           }
@@ -892,7 +1063,15 @@ function Dashboard() {
               ? locations
               : []
           );
-        } else {
+
+        }
+
+        // ---------------------------------------------
+        // ONLINE
+        // ---------------------------------------------
+
+        else {
+
           const response =
             await axios.get(
               `${API_BASE_URL}/safe-locations`,
@@ -918,7 +1097,13 @@ function Dashboard() {
               locations
             )
           );
+
         }
+
+        // ---------------------------------------------
+        // REMOVE FOOD AND POLICE FROM
+        // SAFEST LOCATION RANKING
+        // ---------------------------------------------
 
         const emergencyLocations =
           locations.filter(
@@ -928,55 +1113,69 @@ function Dashboard() {
               )
           );
 
+        // ---------------------------------------------
+        // CALCULATE STRAIGHT-LINE DISTANCE
+        // ---------------------------------------------
+
         const nearbyLocations =
           emergencyLocations
+
             .filter(
               (location) =>
-                location.latitude !=
-                  null &&
-                location.longitude !=
-                  null
+                location.latitude != null &&
+                location.longitude != null
             )
+
             .map(
-              (location) => {
-                const distance =
+              (location) => ({
+
+                ...location,
+
+                distance:
                   calculateDistanceKm(
+
                     Number(
                       userLocation.latitude
                     ),
+
                     Number(
                       userLocation.longitude
                     ),
+
                     Number(
                       location.latitude
                     ),
+
                     Number(
                       location.longitude
                     )
-                  );
 
-                return {
-                  ...location,
-                  distance,
-                };
-              }
+                  ),
+
+              })
             )
+
             .filter(
               (location) =>
                 location.distance <=
                 MAX_DISTANCE_KM
             );
 
+        // ---------------------------------------------
+        // GET ROAD DISTANCES
+        // ---------------------------------------------
+
         let locationsWithRoadDistance =
           [];
 
         if (isOnline) {
+
           locationsWithRoadDistance =
             await Promise.all(
+
               nearbyLocations.map(
-                async (
-                  location
-                ) => {
+                async (location) => {
+
                   const road =
                     await getRoadDistance(
                       userLocation,
@@ -984,6 +1183,7 @@ function Dashboard() {
                     );
 
                   return {
+
                     ...location,
 
                     roadDistance:
@@ -997,29 +1197,41 @@ function Dashboard() {
                     roadDistanceFromCache:
                       road?.fromCache ??
                       false,
+
                   };
+
                 }
               )
+
             );
+
         } else {
+
           const roadCache =
             getRoadDistanceCache();
 
           locationsWithRoadDistance =
             nearbyLocations.map(
               (location) => {
+
                 const key =
                   createRoadDistanceKey(
+
                     userLocation.latitude,
+
                     userLocation.longitude,
+
                     location.latitude,
+
                     location.longitude
+
                   );
 
                 const cached =
                   roadCache[key];
 
                 return {
+
                   ...location,
 
                   roadDistance:
@@ -1048,10 +1260,17 @@ function Dashboard() {
 
                   roadDistanceFromCache:
                     Boolean(cached),
+
                 };
+
               }
             );
+
         }
+
+        // ---------------------------------------------
+        // DISASTER TYPE
+        // ---------------------------------------------
 
         const disasterType =
           normalizeDisasterType(
@@ -1061,33 +1280,44 @@ function Dashboard() {
         let sortedLocations =
           [];
 
+        // ---------------------------------------------
+        // HEAVY RAIN
+        // HIGHER ELEVATION FIRST
+        // ---------------------------------------------
+
         if (
           disasterType ===
           "Heavy Rain"
         ) {
+
           sortedLocations =
             [
               ...locationsWithRoadDistance,
             ].sort(
               (a, b) => {
+
                 const elevationA =
                   Number(
-                    a.elevation ?? 0
+                    a.elevation ??
+                      0
                   );
 
                 const elevationB =
                   Number(
-                    b.elevation ?? 0
+                    b.elevation ??
+                      0
                   );
 
                 if (
                   elevationA !==
                   elevationB
                 ) {
+
                   return (
                     elevationB -
                     elevationA
                   );
+
                 }
 
                 const distanceA =
@@ -1102,17 +1332,27 @@ function Dashboard() {
                   distanceA -
                   distanceB
                 );
+
               }
             );
-        } else if (
+
+        }
+
+        // ---------------------------------------------
+        // EXTREME HEAT
+        // ---------------------------------------------
+
+        else if (
           disasterType ===
           "Extreme Heat"
         ) {
+
           sortedLocations =
             [
               ...locationsWithRoadDistance,
             ].sort(
               (a, b) => {
+
                 const scoreA =
                   getHeatSafetyScore(
                     a
@@ -1127,10 +1367,12 @@ function Dashboard() {
                   scoreA !==
                   scoreB
                 ) {
+
                   return (
                     scoreB -
                     scoreA
                   );
+
                 }
 
                 const distanceA =
@@ -1145,14 +1387,24 @@ function Dashboard() {
                   distanceA -
                   distanceB
                 );
+
               }
             );
-        } else {
+
+        }
+
+        // ---------------------------------------------
+        // NO DISASTER
+        // ---------------------------------------------
+
+        else {
+
           sortedLocations =
             [
               ...locationsWithRoadDistance,
             ].sort(
               (a, b) => {
+
                 const distanceA =
                   a.roadDistance ??
                   a.distance;
@@ -1165,14 +1417,24 @@ function Dashboard() {
                   distanceA -
                   distanceB
                 );
+
               }
             );
+
         }
+
+        // ---------------------------------------------
+        // REMOVE DUPLICATES
+        // ---------------------------------------------
 
         const uniqueLocations =
           removeDuplicateLocations(
             sortedLocations
           );
+
+        // ---------------------------------------------
+        // TOP 5
+        // ---------------------------------------------
 
         const finalLocations =
           uniqueLocations
@@ -1182,6 +1444,7 @@ function Dashboard() {
                 location,
                 index
               ) => ({
+
                 ...location,
 
                 rank:
@@ -1191,30 +1454,34 @@ function Dashboard() {
                   getHeatSafetyScore(
                     location
                   ),
+
               })
             );
 
         setSafestLocations(
           finalLocations
         );
+
       } catch (error) {
+
         console.error(
           "Safe location error:",
           error
         );
 
         try {
+
           const savedLocations =
             localStorage.getItem(
               SAFE_LOCATIONS_CACHE_KEY
             );
 
           if (!savedLocations) {
-            setSafestLocations(
-              []
-            );
+
+            setSafestLocations([]);
 
             return;
+
           }
 
           const cachedLocations =
@@ -1235,49 +1502,62 @@ function Dashboard() {
 
           const nearby =
             cachedLocations
+
               .filter(
                 (location) =>
                   !isServiceLocation(
                     location
                   )
               )
+
               .filter(
                 (location) =>
-                  location.latitude !=
-                    null &&
-                  location.longitude !=
-                    null
+                  location.latitude != null &&
+                  location.longitude != null
               )
+
               .map(
                 (location) => {
+
                   const distance =
                     calculateDistanceKm(
+
                       Number(
                         userLocation.latitude
                       ),
+
                       Number(
                         userLocation.longitude
                       ),
+
                       Number(
                         location.latitude
                       ),
+
                       Number(
                         location.longitude
                       )
+
                     );
 
                   const key =
                     createRoadDistanceKey(
+
                       userLocation.latitude,
+
                       userLocation.longitude,
+
                       location.latitude,
+
                       location.longitude
+
                     );
 
                   const cachedRoad =
                     roadCache[key];
 
                   return {
+
                     ...location,
 
                     distance,
@@ -1305,16 +1585,21 @@ function Dashboard() {
                             cachedRoad.duration
                           )
                         : null,
+
                   };
+
                 }
               )
+
               .filter(
                 (location) =>
                   location.distance <=
                   MAX_DISTANCE_KM
               )
+
               .sort(
                 (a, b) => {
+
                   const distanceA =
                     a.roadDistance ??
                     a.distance;
@@ -1327,6 +1612,7 @@ function Dashboard() {
                     distanceA -
                     distanceB
                   );
+
                 }
               );
 
@@ -1336,6 +1622,7 @@ function Dashboard() {
             );
 
           setSafestLocations(
+
             unique
               .slice(0, 5)
               .map(
@@ -1343,6 +1630,7 @@ function Dashboard() {
                   location,
                   index
                 ) => ({
+
                   ...location,
 
                   rank:
@@ -1352,36 +1640,53 @@ function Dashboard() {
                     getHeatSafetyScore(
                       location
                     ),
+
                 })
               )
+
           );
+
         } catch {
-          setSafestLocations(
-            []
-          );
+
+          setSafestLocations([]);
+
         }
+
       } finally {
+
         setLoadingLocations(
           false
         );
+
       }
+
     }, [
       userLocation,
       alert,
       isOnline,
     ]);
 
+  // ===================================================
+  // LOAD SAFE LOCATIONS
+  // ===================================================
+
   useEffect(() => {
+
     getSafestLocations();
-  }, [getSafestLocations]);
+
+  }, [
+    getSafestLocations,
+  ]);
 
   // ===================================================
-  // CACHED WEATHER
+  // LOAD CACHED WEATHER
   // ===================================================
 
   const loadCachedWeather =
     useCallback(() => {
+
       try {
+
         const savedWeather =
           localStorage.getItem(
             WEATHER_CACHE_KEY
@@ -1393,6 +1698,7 @@ function Dashboard() {
           );
 
         if (savedWeather) {
+
           const parsedWeather =
             JSON.parse(
               savedWeather
@@ -1403,60 +1709,67 @@ function Dashboard() {
           );
 
           if (savedTime) {
+
             setWeatherLastUpdated(
-              new Date(
-                savedTime
-              )
+              new Date(savedTime)
             );
+
           }
 
           return true;
+
         }
+
       } catch (error) {
+
         console.error(
           "Cached weather loading error:",
           error
         );
+
       }
 
       return false;
+
     }, []);
 
   // ===================================================
-  // WEATHER
+  // GET WEATHER
   // ===================================================
 
   const getWeather =
     useCallback(async () => {
+
       if (!userLocation) {
         return;
       }
 
       if (!isOnline) {
-        setLoadingWeather(
-          false
-        );
+
+        setLoadingWeather(false);
 
         loadCachedWeather();
 
         return;
+
       }
 
       try {
-        setLoadingWeather(
-          true
-        );
+
+        setLoadingWeather(true);
 
         const response =
           await axios.get(
             `${API_BASE_URL}/weather`,
             {
               params: {
+
                 latitude:
                   userLocation.latitude,
 
                 longitude:
                   userLocation.longitude,
+
               },
 
               timeout: 5000,
@@ -1486,43 +1799,62 @@ function Dashboard() {
         );
 
         setWeatherLastUpdated(
-          new Date(
-            updatedAt
-          )
+          new Date(updatedAt)
         );
+
       } catch (error) {
+
         console.error(
           "Weather error:",
           error
         );
 
         loadCachedWeather();
+
       } finally {
-        setLoadingWeather(
-          false
-        );
+
+        setLoadingWeather(false);
+
       }
+
     }, [
       userLocation,
       isOnline,
       loadCachedWeather,
     ]);
 
-  useEffect(() => {
-    getWeather();
-  }, [getWeather]);
+  // ===================================================
+  // LOAD WEATHER
+  // ===================================================
 
   useEffect(() => {
+
+    getWeather();
+
+  }, [
+    getWeather,
+  ]);
+
+  // ===================================================
+  // REFRESH WEATHER WHEN INTERNET RETURNS
+  // ===================================================
+
+  useEffect(() => {
+
     const handleOnline =
       () => {
+
         setIsOnline(true);
+
       };
 
     const handleOffline =
       () => {
+
         setIsOnline(false);
 
         loadCachedWeather();
+
       };
 
     window.addEventListener(
@@ -1536,6 +1868,7 @@ function Dashboard() {
     );
 
     return () => {
+
       window.removeEventListener(
         "online",
         handleOnline
@@ -1545,11 +1878,15 @@ function Dashboard() {
         "offline",
         handleOffline
       );
+
     };
-  }, [loadCachedWeather]);
+
+  }, [
+    loadCachedWeather,
+  ]);
 
   // ===================================================
-  // WEATHER DATA
+  // WEATHER VALUES
   // ===================================================
 
   const temperature =
@@ -1574,7 +1911,7 @@ function Dashboard() {
     null;
 
   // ===================================================
-  // DISASTER TYPE
+  // CURRENT DISASTER
   // ===================================================
 
   const currentDisaster =
@@ -1584,71 +1921,15 @@ function Dashboard() {
         )
       : null;
 
+  // ===================================================
+  // CURRENT WEATHER CONDITION
+  // ===================================================
+
   const weatherCondition =
     getWeatherCondition(
       weather,
       currentDisaster
     );
-
-  // ===================================================
-  // SAFETY GUIDANCE
-  // ===================================================
-
-  const safetyGuidance = {
-    "Heavy Rain": {
-      icon: "🌧️",
-      title: "Heavy Rain Safety",
-      message:
-        "Stay indoors when possible. Avoid flooded roads, low-lying areas and flowing water.",
-      actions: [
-        "Move to higher ground if water levels rise.",
-        "Do not walk or drive through floodwater.",
-        "Keep your phone charged and monitor alerts.",
-      ],
-    },
-
-    "Extreme Heat": {
-      icon: "☀️",
-      title: "Extreme Heat Safety",
-      message:
-        "Stay cool and hydrated. Avoid direct sunlight and unnecessary outdoor activity.",
-      actions: [
-        "Drink water regularly.",
-        "Stay indoors or move to a cool safe location.",
-        "Check on children, older adults and vulnerable people.",
-      ],
-    },
-
-    Thunderstorm: {
-      icon: "⛈️",
-      title: "Thunderstorm Safety",
-      message:
-        "Stay indoors and avoid exposed areas until the storm passes.",
-      actions: [
-        "Stay away from trees and open fields.",
-        "Avoid using electrical equipment during lightning.",
-        "Do not shelter under isolated trees.",
-      ],
-    },
-
-    Normal: {
-      icon: "🛡️",
-      title: "Stay Prepared",
-      message:
-        "No immediate weather-related danger is detected. Continue monitoring disaster alerts.",
-      actions: [
-        "Keep emergency contacts available.",
-        "Keep your phone charged.",
-        "Know the nearest safe location.",
-      ],
-    },
-  };
-
-  const activeSafetyGuidance =
-    safetyGuidance[
-      weatherCondition
-    ] ||
-    safetyGuidance.Normal;
 
   // ===================================================
   // FOOD SERVICES
@@ -1665,23 +1946,26 @@ function Dashboard() {
       .filter(
         (location) =>
           userLocation &&
-          location.latitude !=
-            null &&
-          location.longitude !=
-            null &&
+          location.latitude != null &&
+          location.longitude != null &&
           calculateDistanceKm(
+
             Number(
               userLocation.latitude
             ),
+
             Number(
               userLocation.longitude
             ),
+
             Number(
               location.latitude
             ),
+
             Number(
               location.longitude
             )
+
           ) <= MAX_DISTANCE_KM
       );
 
@@ -1700,58 +1984,74 @@ function Dashboard() {
       .filter(
         (location) =>
           userLocation &&
-          location.latitude !=
-            null &&
-          location.longitude !=
-            null &&
+          location.latitude != null &&
+          location.longitude != null &&
           calculateDistanceKm(
+
             Number(
               userLocation.latitude
             ),
+
             Number(
               userLocation.longitude
             ),
+
             Number(
               location.latitude
             ),
+
             Number(
               location.longitude
             )
+
           ) <= MAX_DISTANCE_KM
       );
 
   // ===================================================
-  // OFFLINE MAP
+  // OPEN SECOND MAP
   // ===================================================
 
   const openOfflineMap =
     (location) => {
+
       setSelectedOfflineLocation({
         ...location,
       });
 
       setTimeout(() => {
+
         const mapSection =
           document.querySelector(
             ".offline-map-section"
           );
 
         if (mapSection) {
-          mapSection.scrollIntoView(
-            {
-              behavior: "smooth",
-              block: "start",
-            }
-          );
+
+          mapSection.scrollIntoView({
+
+            behavior: "smooth",
+
+            block: "start",
+
+          });
+
         }
+
       }, 200);
+
     };
+
+  // ===================================================
+  // CLOSE SECOND MAP
+  // ===================================================
 
   const closeOfflineMap =
     () => {
+
       setSelectedOfflineLocation(
         null
       );
+
     };
 
   // ===================================================
@@ -1761,11 +2061,8 @@ function Dashboard() {
   return (
     <div className="dashboard">
 
-      {/* =================================================
-          HEADER
-      ================================================= */}
-
       <header className="dashboard-header">
+
         <div className="dashboard-brand">
 
           <div className="brand-icon">
@@ -1773,6 +2070,7 @@ function Dashboard() {
           </div>
 
           <div>
+
             <h1>
               Disaster Alert
             </h1>
@@ -1780,6 +2078,7 @@ function Dashboard() {
             <span>
               Emergency Safety Dashboard
             </span>
+
           </div>
 
         </div>
@@ -1791,27 +2090,22 @@ function Dashboard() {
               : "offline"
           }`}
         >
+
           <span className="status-dot"></span>
 
           {isOnline
             ? "Online"
             : "Offline"}
-        </div>
-      </header>
 
-      {/* =================================================
-          MAIN CONTENT
-      ================================================= */}
+        </div>
+
+      </header>
 
       <main className="dashboard-content">
 
-        {/* =================================================
-            WELCOME
-        ================================================= */}
-
         <section className="welcome-section">
 
-          <div className="welcome-content">
+          <div>
 
             <div className="welcome-label">
               SAFETY CENTER
@@ -1831,34 +2125,35 @@ function Dashboard() {
 
           </div>
 
-          <div className="welcome-actions">
+          <div className="location-badge">
 
-            <div className="location-badge">
-              📍{" "}
-              {userLocation
-                ? "Location detected"
-                : "Location unavailable"}
-            </div>
+            📍{" "}
 
-            <button
-              type="button"
-              onClick={
-                enableFirebaseNotifications
-              }
-              className="notification-button"
-            >
-              🔔 Enable Notifications
-            </button>
+            {userLocation
+              ? "Location detected"
+              : "Location unavailable"}
 
           </div>
 
+          <button
+            type="button"
+            onClick={enableFirebaseNotifications}
+            style={{
+              marginTop: "12px",
+              padding: "10px 16px",
+              border: "none",
+              borderRadius: "10px",
+              cursor: "pointer",
+              fontWeight: "600",
+            }}
+          >
+            🔔 Enable Notifications
+          </button>
+
         </section>
 
-        {/* =================================================
-            OFFLINE NOTICE
-        ================================================= */}
-
         {!isOnline && (
+
           <section className="offline-alert">
 
             <div className="offline-icon">
@@ -1866,6 +2161,7 @@ function Dashboard() {
             </div>
 
             <div>
+
               <strong>
                 You are currently offline
               </strong>
@@ -1875,484 +2171,443 @@ function Dashboard() {
                 weather and safe-location
                 information is being used.
               </p>
+
             </div>
 
           </section>
-        )}
 
-        {/* =================================================
-            MAIN GRID
-        ================================================= */}
+        )}
 
         <div className="dashboard-main-grid">
 
-          {/* =================================================
-              SIDEBAR
-          ================================================= */}
-
           <aside className="dashboard-sidebar">
 
-            {/* =================================================
-                DISASTER ALERT
-            ================================================= */}
+        {loadingAlert ? (
 
-            {loadingAlert ? (
-              <section className="disaster-alert loading-alert">
+          <section className="disaster-alert">
 
-                <div className="alert-icon">
-                  ⏳
-                </div>
+            <div className="alert-icon">
+              ⏳
+            </div>
 
-                <div className="alert-content">
-                  <h2>
-                    Loading disaster alert...
-                  </h2>
-                </div>
+            <div className="alert-content">
 
-              </section>
-            ) : alert ? (
+              <h2>
+                Loading disaster alert...
+              </h2>
 
-              <section className="disaster-alert">
+            </div>
 
-                <div className="alert-top-line"></div>
+          </section>
 
-                <div className="alert-icon">
-                  🚨
-                </div>
+        ) : alert ? (
 
-                <div className="alert-content">
+          <section className="disaster-alert">
 
-                  <div className="alert-label">
-                    ACTIVE DISASTER ALERT
-                  </div>
+            <div className="alert-icon">
+              🚨
+            </div>
 
-                  <h2>
-                    {alert.title ||
-                      alert.disasterType ||
-                      "Disaster Alert"}
-                  </h2>
+            <div className="alert-content">
 
-                  <p>
-                    {alert.message ||
-                      "Please follow safety instructions."}
-                  </p>
+              <div className="alert-label">
+                ACTIVE DISASTER ALERT
+              </div>
 
-                  <div className="alert-details">
+              <h2>
+                {alert.title ||
+                  alert.disasterType ||
+                  "Disaster Alert"}
+              </h2>
 
-                    {alert.disasterType && (
-                      <span>
-                        🌪️{" "}
-                        {normalizeDisasterType(
-                          alert.disasterType
-                        )}
-                      </span>
-                    )}
+              <p>
+                {alert.message ||
+                  "Please follow safety instructions."}
+              </p>
 
-                    {alert.severity && (
-                      <span>
-                        ⚠️ Severity:{" "}
-                        {alert.severity}
-                      </span>
-                    )}
+              <div className="alert-details">
 
-                    {alert.location && (
-                      <span>
-                        📍{" "}
-                        {alert.location}
-                      </span>
-                    )}
+                {alert.disasterType && (
 
-                  </div>
+                  <span>
+                    🌪️{" "}
+                    {alert.disasterType}
+                  </span>
 
-                </div>
+                )}
 
-                <div className="alert-status">
-                  ACTIVE
-                </div>
+                {alert.severity && (
 
-              </section>
+                  <span>
+                    ⚠️ Severity:{" "}
+                    {alert.severity}
+                  </span>
 
-            ) : (
+                )}
 
-              <section className="safe-alert">
+                {alert.location && (
 
-                <div className="safe-alert-icon">
-                  ✅
-                </div>
+                  <span>
+                    📍{" "}
+                    {alert.location}
+                  </span>
 
-                <div>
-                  <h3>
-                    No Active Disaster Alert
-                  </h3>
+                )}
 
-                  <p>
-                    No active disaster
-                    alert has been reported.
-                  </p>
-                </div>
+              </div>
 
-              </section>
+            </div>
+
+            <div className="alert-status">
+              ACTIVE
+            </div>
+
+          </section>
+
+        ) : (
+
+          <section className="safe-alert">
+
+            <div className="safe-alert-icon">
+              ✅
+            </div>
+
+            <div>
+
+              <h3>
+                No Active Disaster Alert
+              </h3>
+
+              <p>
+                No active disaster
+                alert has been reported.
+              </p>
+
+            </div>
+
+          </section>
+
+        )}
+
+        {/* =================================================
+            SOS EMERGENCY BUTTON
+        ================================================= */}
+
+
+        <section className="sos-panel">
+          <SOSButton />
+        </section>
+
+        <section className="weather-section">
+
+          <div className="section-title">
+
+            <div>
+
+              <h2>
+                🌤️ Current Weather
+              </h2>
+
+              <p>
+                Weather conditions near
+                your location
+              </p>
+
+            </div>
+
+            {isOnline && weather && (
+
+              <span className="live-badge">
+                LIVE
+              </span>
 
             )}
 
-            {/* =================================================
-                SOS
-            ================================================= */}
+          </div>
 
-            <section className="sos-panel">
+          {loadingWeather ? (
 
-              <div className="sos-panel-header">
+            <div className="weather-loading">
+              Loading weather information...
+            </div>
 
-                <div>
-                  <span>
-                    EMERGENCY RESPONSE
-                  </span>
+          ) : weather ? (
 
-                  <h2>
-                    Need immediate help?
-                  </h2>
-                </div>
+            <>
 
-                <div className="sos-header-icon">
-                  🆘
-                </div>
+              <div className="weather-grid">
 
-              </div>
+                <div className="weather-main">
 
-              <p className="sos-panel-description">
-                Send your emergency request
-                with your current location
-                to the response system.
-              </p>
-
-              <SOSButton />
-
-            </section>
-
-            {/* =================================================
-                WEATHER
-            ================================================= */}
-
-            <section className="weather-section">
-
-              <div className="section-title">
-
-                <div>
-                  <h2>
-                    🌤️ Current Weather
-                  </h2>
-
-                  <p>
-                    Weather conditions near
-                    your location
-                  </p>
-                </div>
-
-                {isOnline &&
-                  weather && (
-                    <span className="live-badge">
-                      LIVE
-                    </span>
-                  )}
-
-              </div>
-
-              {loadingWeather ? (
-
-                <div className="weather-loading">
-                  <span className="loading-spinner"></span>
-                  Loading weather information...
-                </div>
-
-              ) : weather ? (
-
-                <>
-
-                  <div className="weather-grid">
-
-                    <div className="weather-main">
-
-                      <div className="weather-icon">
-                        🌤️
-                      </div>
-
-                      <div>
-                        <span>
-                          Temperature
-                        </span>
-
-                        <strong>
-                          {temperature != null
-                            ? `${temperature}°C`
-                            : "—"}
-                        </strong>
-
-                        <small>
-                          {weatherDescription ||
-                            "Current conditions"}
-                        </small>
-                      </div>
-
-                    </div>
-
-                    <div className="weather-item">
-                      <span>
-                        💧 Humidity
-                      </span>
-
-                      <strong>
-                        {humidity != null
-                          ? `${humidity}%`
-                          : "—"}
-                      </strong>
-                    </div>
-
-                    <div className="weather-item">
-                      <span>
-                        💨 Wind
-                      </span>
-
-                      <strong>
-                        {windSpeed != null
-                          ? windSpeed
-                          : "—"}
-                      </strong>
-                    </div>
-
-                  </div>
-
-                  <div className="weather-condition-card">
-
-                    <span>
-                      Safety condition
-                    </span>
-
-                    <strong>
-                      {weatherCondition}
-                    </strong>
-
-                  </div>
-
-                  {weatherLastUpdated && (
-                    <div className="weather-last-updated">
-                      {isOnline
-                        ? "✓ Last updated: "
-                        : "📡 Offline • Last updated: "}
-
-                      {formatWeatherTime(
-                        weatherLastUpdated
-                      )}
-                    </div>
-                  )}
-
-                </>
-
-              ) : (
-
-                <div className="weather-placeholder">
-
-                  <div className="weather-placeholder-icon">
+                  <div className="weather-icon">
                     🌤️
                   </div>
 
-                  <h3>
-                    Weather unavailable
-                  </h3>
+                  <div>
 
-                  <p>
-                    {isOnline
-                      ? "Weather information will appear when available."
-                      : "No previously saved weather data is available. Connect to the internet once to load weather information."}
-                  </p>
+                    <span>
+                      Temperature
+                    </span>
+
+                    <strong>
+
+                      {temperature != null
+                        ? `${temperature}°C`
+                        : "—"}
+
+                    </strong>
+
+                    <small>
+
+                      {weatherDescription ||
+                        "Current conditions"}
+
+                    </small>
+
+                  </div>
+
+                </div>
+
+                <div className="weather-item">
+
+                  <span>
+                    💧 Humidity
+                  </span>
+
+                  <strong>
+
+                    {humidity != null
+                      ? `${humidity}%`
+                      : "—"}
+
+                  </strong>
+
+                </div>
+
+                <div className="weather-item">
+
+                  <span>
+                    💨 Wind
+                  </span>
+
+                  <strong>
+
+                    {windSpeed != null
+                      ? windSpeed
+                      : "—"}
+
+                  </strong>
+
+                </div>
+
+              </div>
+
+              <div className="weather-condition-card">
+
+                <span>
+                  Safety condition
+                </span>
+
+                <strong>
+                  {weatherCondition}
+                </strong>
+
+              </div>
+
+              {weatherLastUpdated && (
+
+                <div
+                  className="weather-last-updated"
+                  style={{
+                    marginTop: "12px",
+                    fontSize: "12px",
+                    color: "#6b7280",
+                  }}
+                >
+
+                  {isOnline
+                    ? "✓ Last updated: "
+                    : "📡 Offline • Last updated: "}
+
+                  {formatWeatherTime(
+                    weatherLastUpdated
+                  )}
 
                 </div>
 
               )}
 
-            </section>
+            </>
 
-            {/* =================================================
-                SAFETY GUIDANCE
-            ================================================= */}
+          ) : (
 
-            <section className="safety-guidance-card">
+            <div className="weather-placeholder">
 
-              <div className="safety-guidance-header">
-
-                <div className="safety-guidance-icon">
-                  {activeSafetyGuidance.icon}
-                </div>
-
-                <div>
-                  <span>
-                    SAFETY GUIDANCE
-                  </span>
-
-                  <h2>
-                    {activeSafetyGuidance.title}
-                  </h2>
-                </div>
-
+              <div className="weather-placeholder-icon">
+                🌤️
               </div>
 
-              <p className="safety-guidance-message">
-                {activeSafetyGuidance.message}
+              <h3>
+                Weather unavailable
+              </h3>
+
+              <p>
+
+                {isOnline
+                  ? "Weather information will appear when available."
+                  : "No previously saved weather data is available. Connect to the internet once to load weather information."}
+
               </p>
 
-              <div className="safety-guidance-actions">
+            </div>
 
-                {activeSafetyGuidance.actions.map(
-                  (action, index) => (
-                    <div
-                      className="safety-guidance-action"
-                      key={index}
-                    >
-                      <span>
-                        ✓
-                      </span>
+          )}
 
-                      <p>
-                        {action}
-                      </p>
-                    </div>
-                  )
-                )}
+        </section>
 
-              </div>
+        {/* =================================================
+            LOCATION
+        ================================================= */}
 
-            </section>
+        <section className="location-card">
 
-            {/* =================================================
-                CURRENT LOCATION
-            ================================================= */}
+          <div className="location-icon">
+            📍
+          </div>
 
-            <section className="location-card">
+          <div className="location-info">
 
-              <div className="location-icon">
-                📍
-              </div>
+            <span>
+              YOUR CURRENT LOCATION
+            </span>
 
-              <div className="location-info">
+            {userLocation ? (
 
-                <span>
-                  YOUR CURRENT LOCATION
-                </span>
+              <p>
 
-                {userLocation ? (
-                  <p>
-                    {Number(
-                      userLocation.latitude
-                    ).toFixed(6)}
+                {Number(
+                  userLocation.latitude
+                ).toFixed(6)}
 
-                    {" , "}
+                {" , "}
 
-                    {Number(
-                      userLocation.longitude
-                    ).toFixed(6)}
-                  </p>
-                ) : (
-                  <p>
-                    Location not available
-                  </p>
-                )}
+                {Number(
+                  userLocation.longitude
+                ).toFixed(6)}
 
-              </div>
+              </p>
 
-              <div
-                className={`location-status ${
-                  userLocation
-                    ? "current"
-                    : "saved"
-                }`}
-              >
-                {userLocation
-                  ? "Available"
-                  : "Unavailable"}
-              </div>
+            ) : (
 
-              <button
-                type="button"
-                className="map-button"
-                onClick={
-                  getLocation
-                }
-              >
-                📍 Update
-              </button>
+              <p>
+                Location not available
+              </p>
 
-            </section>
+            )}
+
+          </div>
+
+          <div
+            className={`location-status ${
+              userLocation
+                ? "current"
+                : "saved"
+            }`}
+          >
+
+            {userLocation
+              ? "Available"
+              : "Unavailable"}
+
+          </div>
+
+          <button
+            type="button"
+            className="map-button"
+            onClick={getLocation}
+          >
+            📍 Update
+          </button>
+
+        </section>
+
+        {/* =================================================
+            MAIN MAP
+        ================================================= */}
+
 
           </aside>
 
-          {/* =================================================
-              MAP
-          ================================================= */}
+        <section className="map-section">
 
-          <section className="map-section">
+          <div className="section-title">
 
-            <div className="section-title">
+            <div>
 
-              <div>
-                <h2>
-                  🗺️ Safety Map
-                </h2>
+              <h2>
+                🗺️ Safety Map
+              </h2>
 
-                <p>
-                  Your location, safest
-                  locations and emergency
-                  services
-                </p>
-              </div>
-
-              <span className="radius-badge">
-                2 KM RADIUS
-              </span>
+              <p>
+                Your location, safest
+                locations and emergency
+                services
+              </p>
 
             </div>
 
-            <div className="map-container">
+            <span className="radius-badge">
+              2 KM RADIUS
+            </span>
 
-              <DisasterMap
-                key="main-safety-map"
+          </div>
 
-                userLocation={
-                  userLocation
-                }
+          <div className="map-container">
 
-                shelters={
-                  safestLocations
-                }
+            <DisasterMap
 
-                safestLocations={
-                  safestLocations
-                }
+              key="main-safety-map"
 
-                foodServices={
-                  foodServices
-                }
+              userLocation={
+                userLocation
+              }
 
-                policeServices={
-                  policeServices
-                }
+              shelters={
+                safestLocations
+              }
 
-                weatherCondition={
-                  weatherCondition
-                }
+              safestLocations={
+                safestLocations
+              }
 
-                selectedShelter={
-                  selectedShelter
-                }
+              foodServices={
+                foodServices
+              }
 
-                onShelterClick={
-                  setSelectedShelter
-                }
+              policeServices={
+                policeServices
+              }
 
-                offlineMode={false}
-              />
+              weatherCondition={
+                weatherCondition
+              }
 
-            </div>
+              selectedShelter={
+                selectedShelter
+              }
 
-          </section>
+              onShelterClick={
+                setSelectedShelter
+              }
+
+              offlineMode={false}
+
+            />
+
+          </div>
+
+        </section>
+
 
         </div>
 
@@ -2379,9 +2634,11 @@ function Dashboard() {
               </div>
 
               <p>
+
                 {currentDisaster
                   ? `Best locations for ${currentDisaster} within 2 km`
                   : "Best emergency locations within 2 km"}
+
               </p>
 
             </div>
@@ -2401,13 +2658,19 @@ function Dashboard() {
               </strong>
 
               <p>
+
                 {currentDisaster ===
                 "Heavy Rain"
+
                   ? "Higher-elevation locations are prioritized because they can reduce flood exposure."
+
                   : currentDisaster ===
                     "Extreme Heat"
+
                   ? "Hospitals, shelters, schools and community facilities are prioritized for heat emergencies."
+
                   : "The nearest registered emergency locations within 2 km are recommended."}
+
               </p>
 
             </div>
@@ -2457,10 +2720,7 @@ function Dashboard() {
             <div className="safest-grid">
 
               {safestLocations.map(
-                (
-                  location,
-                  index
-                ) => (
+                (location, index) => (
 
                   <div
                     className={`safest-location-card ${
@@ -2468,7 +2728,6 @@ function Dashboard() {
                         ? "top-safe"
                         : ""
                     }`}
-
                     key={
                       location.id ??
                       `${location.name}-${location.latitude}-${location.longitude}`
@@ -2493,62 +2752,73 @@ function Dashboard() {
                         </h3>
 
                         {index === 0 && (
+
                           <span>
                             BEST OPTION
                           </span>
+
                         )}
 
                       </div>
 
                       <div className="location-type">
+
                         {location.type ||
                           "Emergency Facility"}
+
                       </div>
 
                       <div className="safe-metrics">
 
                         <div>
+
                           <span>
                             Road Distance
                           </span>
 
                           <strong>
+
                             {formatDistance(
                               location.roadDistance ??
                               location.distance
                             )}
+
                           </strong>
+
                         </div>
 
                         {location.capacity !=
                           null && (
+
                           <div>
+
                             <span>
                               Capacity
                             </span>
 
                             <strong>
-                              {
-                                location.capacity
-                              }
+                              {location.capacity}
                             </strong>
+
                           </div>
+
                         )}
 
                         {location.elevation !=
                           null && (
+
                           <div>
+
                             <span>
                               Elevation
                             </span>
 
                             <strong>
-                              {
-                                location.elevation
-                              }{" "}
-                              m
+                              {location.elevation} m
                             </strong>
+
                           </div>
+
                         )}
 
                       </div>
@@ -2557,31 +2827,49 @@ function Dashboard() {
                         null &&
                         location.distance !=
                           null && (
-                          <div className="straight-distance">
-                            Straight-line distance:{" "}
-                            {formatDistance(
-                              location.distance
-                            )}
-                          </div>
-                        )}
+
+                        <div
+                          style={{
+                            marginTop: "6px",
+                            fontSize: "11px",
+                            color: "#9ca3af",
+                          }}
+                        >
+
+                          Straight-line distance:{" "}
+
+                          {formatDistance(
+                            location.distance
+                          )}
+
+                        </div>
+
+                      )}
 
                       {currentDisaster ===
                         "Extreme Heat" && (
+
                         <div className="heat-score">
+
                           ☀️ Heat Safety Score:{" "}
+
                           <strong>
-                            {
-                              location.heatSafetyScore
-                            }
+                            {location.heatSafetyScore}
                           </strong>
+
                         </div>
+
                       )}
 
                       {location.address && (
+
                         <p className="safe-address">
+
                           🏠{" "}
                           {location.address}
+
                         </p>
+
                       )}
 
                       <button
@@ -2610,10 +2898,11 @@ function Dashboard() {
         </section>
 
         {/* =================================================
-            OFFLINE MAP
+            SECOND MAP
         ================================================= */}
 
         {selectedOfflineLocation && (
+
           <section className="offline-map-section">
 
             <div className="section-title">
@@ -2633,12 +2922,15 @@ function Dashboard() {
                 </div>
 
                 <p>
+
                   Map for{" "}
+
                   <strong>
                     {
                       selectedOfflineLocation.name
                     }
                   </strong>
+
                 </p>
 
               </div>
@@ -2646,9 +2938,7 @@ function Dashboard() {
               <button
                 type="button"
                 className="close-map-button"
-                onClick={
-                  closeOfflineMap
-                }
+                onClick={closeOfflineMap}
               >
                 ✕ Close Map
               </button>
@@ -2672,10 +2962,12 @@ function Dashboard() {
                   </h3>
 
                   <span>
+
                     {
                       selectedOfflineLocation.type ||
                       "Emergency Facility"
                     }
+
                   </span>
 
                 </div>
@@ -2689,16 +2981,19 @@ function Dashboard() {
                 </span>
 
                 <strong>
+
                   {formatDistance(
                     selectedOfflineLocation.roadDistance ??
                     selectedOfflineLocation.distance
                   )}
+
                 </strong>
 
               </div>
 
               {selectedOfflineLocation.capacity !=
                 null && (
+
                 <div className="offline-location-distance">
 
                   <span>
@@ -2712,10 +3007,12 @@ function Dashboard() {
                   </strong>
 
                 </div>
+
               )}
 
               {selectedOfflineLocation.elevation !=
                 null && (
+
                 <div className="offline-location-distance">
 
                   <span>
@@ -2730,6 +3027,7 @@ function Dashboard() {
                   </strong>
 
                 </div>
+
               )}
 
             </div>
@@ -2737,6 +3035,7 @@ function Dashboard() {
             <div className="offline-map-container">
 
               <DisasterMap
+
                 key={`offline-map-${
                   selectedOfflineLocation.id ??
                   selectedOfflineLocation.name
@@ -2747,11 +3046,11 @@ function Dashboard() {
                 }
 
                 shelters={[
-                  selectedOfflineLocation,
+                  selectedOfflineLocation
                 ]}
 
                 safestLocations={[
-                  selectedOfflineLocation,
+                  selectedOfflineLocation
                 ]}
 
                 foodServices={
@@ -2773,6 +3072,7 @@ function Dashboard() {
                 onShelterClick={() => {}}
 
                 offlineMode={true}
+
               />
 
             </div>
@@ -2790,12 +3090,14 @@ function Dashboard() {
                 </strong>
 
                 <p>
+
                   When internet is available,
                   the map uses OpenStreetMap
                   and road routing.
                   When internet is unavailable,
                   previously cached map tiles
                   and routes can be used.
+
                 </p>
 
               </div>
@@ -2803,6 +3105,7 @@ function Dashboard() {
             </div>
 
           </section>
+
         )}
 
         {/* =================================================
@@ -2836,6 +3139,7 @@ function Dashboard() {
               </div>
 
               <div>
+
                 <h3>
                   Emergency
                 </h3>
@@ -2847,6 +3151,7 @@ function Dashboard() {
                 <a href="tel:112">
                   Call 112
                 </a>
+
               </div>
 
             </div>
@@ -2858,6 +3163,7 @@ function Dashboard() {
               </div>
 
               <div>
+
                 <h3>
                   Fire & Rescue
                 </h3>
@@ -2869,6 +3175,7 @@ function Dashboard() {
                 <a href="tel:101">
                   Call 101
                 </a>
+
               </div>
 
             </div>
@@ -2880,6 +3187,7 @@ function Dashboard() {
               </div>
 
               <div>
+
                 <h3>
                   Ambulance
                 </h3>
@@ -2891,6 +3199,7 @@ function Dashboard() {
                 <a href="tel:108">
                   Call 108
                 </a>
+
               </div>
 
             </div>
@@ -2902,6 +3211,7 @@ function Dashboard() {
               </div>
 
               <div>
+
                 <h3>
                   Police
                 </h3>
@@ -2913,6 +3223,7 @@ function Dashboard() {
                 <a href="tel:100">
                   Call 100
                 </a>
+
               </div>
 
             </div>
@@ -2922,10 +3233,6 @@ function Dashboard() {
         </section>
 
       </main>
-
-      {/* =================================================
-          FOOTER
-      ================================================= */}
 
       <footer className="dashboard-footer">
 
