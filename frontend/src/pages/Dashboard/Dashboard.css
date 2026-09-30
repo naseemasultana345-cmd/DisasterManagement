@@ -1,8 +1,4 @@
-/* =========================================================
-   DISASTER MANAGEMENT DASHBOARD
-   Modern Emergency Command Center
-   UI ONLY - Existing Dashboard.jsx logic preserved
-   ========================================================= */
+
 
 * {
   box-sizing: border-box;
@@ -2488,7 +2484,6 @@
       30px 36px minmax(0, 1fr);
   }
 }
-```css
 /* =========================================================
    DISASTER MANAGEMENT DASHBOARD
    Modern Emergency Command Center
