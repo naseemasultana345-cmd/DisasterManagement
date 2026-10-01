@@ -2,26 +2,29 @@ package com.disaster.backend.controller;
 
 import com.disaster.backend.entity.SOSRequest;
 import com.disaster.backend.service.SOSService;
+import com.disaster.backend.service.TextbeltSmsService;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/sos")
-@CrossOrigin(origins = {
-        "http://localhost:5173",
-        "https://disaster-management-pink-seven.vercel.app"
-})
 public class SOSController {
 
     private final SOSService sosService;
+    private final TextbeltSmsService textbeltSmsService;
+
 
     public SOSController(
-            SOSService sosService) {
+            SOSService sosService,
+            TextbeltSmsService textbeltSmsService) {
 
         this.sosService = sosService;
+        this.textbeltSmsService = textbeltSmsService;
     }
 
 
@@ -31,16 +34,70 @@ public class SOSController {
     // =========================================================
 
     @PostMapping
-    public ResponseEntity<SOSRequest> createSOS(
+    public ResponseEntity<Map<String, Object>> createSOS(
             @RequestBody SOSRequest sosRequest) {
+
+        // -----------------------------------------------------
+        // 1. SAVE SOS TO DATABASE
+        // -----------------------------------------------------
 
         SOSRequest savedSOS =
                 sosService.createSOS(
                         sosRequest
                 );
 
-        return ResponseEntity.ok(
+
+        // -----------------------------------------------------
+        // 2. SEND SMS TO ONE EMERGENCY NUMBER
+        // -----------------------------------------------------
+
+        boolean smsSent = false;
+
+        try {
+
+            smsSent =
+                    textbeltSmsService.sendSOSMessage(
+                            savedSOS.getLatitude(),
+                            savedSOS.getLongitude(),
+                            savedSOS.getEmergencyType()
+                    );
+
+        } catch (Exception e) {
+
+            System.err.println(
+                    "SOS SMS sending failed: "
+                            + e.getMessage()
+            );
+        }
+
+
+        // -----------------------------------------------------
+        // 3. RETURN RESPONSE
+        // -----------------------------------------------------
+
+        Map<String, Object> response =
+                new HashMap<>();
+
+        response.put(
+                "sos",
                 savedSOS
+        );
+
+        response.put(
+                "smsSent",
+                smsSent
+        );
+
+        response.put(
+                "message",
+                smsSent
+                        ? "SOS created and SMS sent successfully"
+                        : "SOS created, but SMS could not be sent"
+        );
+
+
+        return ResponseEntity.ok(
+                response
         );
     }
 

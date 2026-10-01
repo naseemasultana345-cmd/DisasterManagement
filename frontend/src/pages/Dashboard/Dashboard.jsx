@@ -1,693 +1,613 @@
-import {
+// ============================================================
+// Dashboard.jsx
+// Disaster Management / DisasterSafe
+// Updated dashboard UI based on the provided reference design
+// ============================================================
+
+import React, {
   useCallback,
   useEffect,
+  useMemo,
+  useRef,
   useState,
 } from "react";
 
-import axios from "axios";
+import {
+  AlertTriangle,
+  Ambulance,
+  Bell,
+  CheckCircle2,
+  ChevronRight,
+  CircleAlert,
+  CloudRain,
+  Compass,
+  Droplets,
+  ExternalLink,
+  Flame,
+  Gauge,
+  Globe2,
+  Home,
+  Info,
+  LocateFixed,
+  LogOut,
+  MapPin,
+  Menu,
+  Navigation,
+  Phone,
+  Radio,
+  RefreshCw,
+  Search,
+  Settings,
+  Shield,
+  ShieldAlert,
+  Siren,
+  Thermometer,
+  User,
+  Users,
+  Waves,
+  Wind,
+  X,
+  Zap,
+} from "lucide-react";
+
+import { useNavigate } from "react-router-dom";
+
+import DisasterMap from "../../components/DisasterMap/DisasterMap";
 
 import "./Dashboard.css";
 
-import DisasterMap from "../../components/DisasterMap/DisasterMap";
-import SOSButton from "../../components/SOS/SOSButton";
-import {
-  requestNotificationPermission,
-  listenForMessages,
-} from "../../firebaseMessaging";
+// ============================================================
+// CONSTANTS
+// ============================================================
 
-const API_BASE_URL =
-  "https://disastermanagement-gzg8.onrender.com/api";
+const API_BASE =
+  import.meta.env.VITE_API_BASE_URL ||
+  "http://localhost:8080/api";
 
 const MAX_DISTANCE_KM = 2;
 
-// =====================================================
-// WEATHER CACHE
-// =====================================================
+const WEATHER_CACHE_KEY = "lastWeather";
+const ALERT_CACHE_KEY = "lastDisasterAlert";
+const SHELTER_CACHE_KEY = "lastShelters";
+const USER_LOCATION_KEY = "lastUserLocation";
 
-const WEATHER_CACHE_KEY =
-  "latestWeather";
+const EMERGENCY_NUMBERS = {
+  emergency: "112",
+  fire: "101",
+  ambulance: "108",
+  police: "100",
+};
 
-const WEATHER_CACHE_TIME_KEY =
-  "latestWeatherUpdatedAt";
+// ============================================================
+// HELPERS
+// ============================================================
 
-// =====================================================
-// SAFE LOCATION CACHE
-// =====================================================
+const safeJson = async (response) => {
+  const text = await response.text();
 
-const SAFE_LOCATIONS_CACHE_KEY =
-  "safeLocations";
+  if (!text) {
+    return null;
+  }
 
-const ROAD_DISTANCE_CACHE_KEY =
-  "safeLocationRoadDistances";
+  try {
+    return JSON.parse(text);
+  } catch {
+    return text;
+  }
+};
 
-// =====================================================
-// ROAD ROUTING
-// =====================================================
+const getStoredJson = (key, fallback = null) => {
+  try {
+    const value = localStorage.getItem(key);
 
-const OSRM_URL =
-  "https://router.project-osrm.org/route/v1/driving";
+    if (!value) {
+      return fallback;
+    }
 
-// =====================================================
-// DISTANCE CALCULATION
-// =====================================================
+    return JSON.parse(value);
+  } catch {
+    return fallback;
+  }
+};
 
-function calculateDistanceKm(
+const setStoredJson = (key, value) => {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch {
+    // Ignore storage errors.
+  }
+};
+
+const getToken = () => {
+  return (
+    localStorage.getItem("token") ||
+    localStorage.getItem("authToken") ||
+    sessionStorage.getItem("token") ||
+    sessionStorage.getItem("authToken") ||
+    ""
+  );
+};
+
+const getCurrentUser = () => {
+  const possibleKeys = [
+    "user",
+    "currentUser",
+    "loggedInUser",
+    "userData",
+  ];
+
+  for (const key of possibleKeys) {
+    try {
+      const value =
+        localStorage.getItem(key) ||
+        sessionStorage.getItem(key);
+
+      if (value) {
+        const parsed = JSON.parse(value);
+
+        if (parsed) {
+          return parsed;
+        }
+      }
+    } catch {
+      // Continue.
+    }
+  }
+
+  return null;
+};
+
+const apiFetch = async (url, options = {}) => {
+  const token = getToken();
+
+  const headers = {
+    Accept: "application/json",
+    ...(options.body
+      ? {
+          "Content-Type": "application/json",
+        }
+      : {}),
+    ...(options.headers || {}),
+  };
+
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  return fetch(url, {
+    ...options,
+    headers,
+  });
+};
+
+const firstDefined = (...values) => {
+  for (const value of values) {
+    if (
+      value !== undefined &&
+      value !== null &&
+      value !== ""
+    ) {
+      return value;
+    }
+  }
+
+  return null;
+};
+
+const numberValue = (value, fallback = 0) => {
+  const number = Number(value);
+
+  return Number.isFinite(number) ? number : fallback;
+};
+
+const formatDistance = (distance) => {
+  const km = numberValue(distance, 0);
+
+  if (km < 1) {
+    return `${Math.max(Math.round(km * 1000), 1)} m away`;
+  }
+
+  return `${km.toFixed(1)} km away`;
+};
+
+const formatElevation = (value) => {
+  const elevation = numberValue(value, 0);
+
+  return `Elev. ${Math.round(elevation)} m`;
+};
+
+const calculateDistanceKm = (
   lat1,
   lon1,
   lat2,
   lon2
-) {
-  const R = 6371;
+) => {
+  if (
+    lat1 === null ||
+    lat1 === undefined ||
+    lon1 === null ||
+    lon1 === undefined ||
+    lat2 === null ||
+    lat2 === undefined ||
+    lon2 === null ||
+    lon2 === undefined
+  ) {
+    return null;
+  }
+
+  const latitude1 = Number(lat1);
+  const longitude1 = Number(lon1);
+  const latitude2 = Number(lat2);
+  const longitude2 = Number(lon2);
+
+  if (
+    !Number.isFinite(latitude1) ||
+    !Number.isFinite(longitude1) ||
+    !Number.isFinite(latitude2) ||
+    !Number.isFinite(longitude2)
+  ) {
+    return null;
+  }
+
+  const earthRadius = 6371;
 
   const dLat =
-    ((lat2 - lat1) * Math.PI) / 180;
+    ((latitude2 - latitude1) * Math.PI) / 180;
 
   const dLon =
-    ((lon2 - lon1) * Math.PI) / 180;
+    ((longitude2 - longitude1) * Math.PI) / 180;
 
   const a =
     Math.sin(dLat / 2) ** 2 +
-    Math.cos(
-      (lat1 * Math.PI) / 180
-    ) *
-      Math.cos(
-        (lat2 * Math.PI) / 180
-      ) *
+    Math.cos((latitude1 * Math.PI) / 180) *
+      Math.cos((latitude2 * Math.PI) / 180) *
       Math.sin(dLon / 2) ** 2;
 
-  return (
-    R *
-    2 *
-    Math.atan2(
-      Math.sqrt(a),
-      Math.sqrt(1 - a)
-    )
-  );
-}
+  const c =
+    2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
-// =====================================================
-// NORMALIZE DISASTER TYPE
-// =====================================================
+  return earthRadius * c;
+};
 
-function normalizeDisasterType(type) {
-  if (!type) {
+const normalizeWeather = (data) => {
+  if (!data) {
     return null;
   }
 
-  const value =
-    String(type)
-      .trim()
-      .toLowerCase();
+  const source =
+    data.data ||
+    data.weather ||
+    data.result ||
+    data;
 
-  if (
-    value === "heavy sun" ||
-    value === "extreme heat" ||
-    value === "heat wave" ||
-    value === "heatwave"
-  ) {
-    return "Extreme Heat";
-  }
+  return {
+    city:
+      firstDefined(
+        source.city,
+        source.location,
+        source.name,
+        "Tirupati"
+      ) || "Tirupati",
 
-  if (
-    value === "heavy rain" ||
-    value === "heavy rainfall" ||
-    value === "rainfall"
-  ) {
-    return "Heavy Rain";
-  }
+    temperature: numberValue(
+      firstDefined(
+        source.temperature,
+        source.temp,
+        source.tempC,
+        source.temperatureC
+      ),
+      30
+    ),
 
-  return type;
-}
+    condition:
+      firstDefined(
+        source.condition,
+        source.description,
+        source.weatherDescription,
+        source.weather
+      ) || "Weather information unavailable",
 
-// =====================================================
-// SERVICE TYPE
-// =====================================================
+    humidity: numberValue(
+      firstDefined(
+        source.humidity,
+        source.humidityPercent
+      ),
+      0
+    ),
 
-function normalizeServiceType(type) {
-  const value =
-    String(type || "")
-      .trim()
-      .toLowerCase();
+    windSpeed: numberValue(
+      firstDefined(
+        source.windSpeed,
+        source.wind,
+        source.windKph,
+        source.windSpeedKph
+      ),
+      0
+    ),
 
-  if (
-    value.includes("food") ||
-    value.includes("meal") ||
-    value.includes("relief")
-  ) {
-    return "FOOD";
-  }
+    visibility: numberValue(
+      firstDefined(
+        source.visibility,
+        source.visibilityKm
+      ),
+      0
+    ),
 
-  if (
-    value.includes("police")
-  ) {
-    return "POLICE";
-  }
+    icon:
+      firstDefined(
+        source.icon,
+        source.weatherIcon
+      ) || null,
 
-  return "";
-}
+    updatedAt:
+      firstDefined(
+        source.updatedAt,
+        source.lastUpdated,
+        source.time
+      ) || null,
+  };
+};
 
-// =====================================================
-// CHECK SERVICE LOCATION
-// =====================================================
-
-function isServiceLocation(location) {
-  const serviceType =
-    normalizeServiceType(
-      location?.type
-    );
-
-  return (
-    serviceType === "FOOD" ||
-    serviceType === "POLICE"
-  );
-}
-
-// =====================================================
-// WEATHER CONDITION
-// =====================================================
-
-function getWeatherCondition(
-  weather,
-  disasterType
-) {
-  const description =
-    String(
-      weather?.description ??
-        weather?.weather?.[0]
-          ?.description ??
-        ""
-    ).toLowerCase();
-
-  const temperature =
-    Number(
-      weather?.temperature ??
-        weather?.main?.temp
-    );
-
-  if (
-    description.includes(
-      "thunderstorm"
-    ) ||
-    description.includes(
-      "storm"
-    )
-  ) {
-    return "Thunderstorm";
-  }
-
-  if (
-    disasterType ===
-      "Extreme Heat" ||
-    description.includes("heat") ||
-    description.includes("hot") ||
-    description.includes(
-      "scorching"
-    ) ||
-    (
-      Number.isFinite(
-        temperature
-      ) &&
-      temperature >= 40
-    )
-  ) {
-    return "Extreme Heat";
-  }
-
-  if (
-    disasterType ===
-      "Heavy Rain" ||
-    description.includes(
-      "very heavy rain"
-    ) ||
-    description.includes(
-      "heavy rain"
-    ) ||
-    description.includes(
-      "rain"
-    ) ||
-    description.includes(
-      "drizzle"
-    ) ||
-    description.includes(
-      "shower"
-    )
-  ) {
-    return "Heavy Rain";
-  }
-
-  return "Normal";
-}
-
-// =====================================================
-// HEAT SAFETY SCORE
-// =====================================================
-
-function getHeatSafetyScore(location) {
-  const type =
-    String(location?.type || "")
-      .toLowerCase();
-
-  if (type.includes("hospital")) {
-    return 100;
-  }
-
-  if (type.includes("shelter")) {
-    return 90;
-  }
-
-  if (type.includes("school")) {
-    return 80;
-  }
-
-  if (type.includes("community")) {
-    return 80;
-  }
-
-  if (type.includes("building")) {
-    return 70;
-  }
-
-  return 50;
-}
-
-// =====================================================
-// FORMAT DISTANCE
-// =====================================================
-
-function formatDistance(distance) {
-  if (distance == null) {
-    return "—";
-  }
-
-  if (distance < 1) {
-    return `${Math.round(
-      distance * 1000
-    )} m`;
-  }
-
-  return `${distance.toFixed(2)} km`;
-}
-
-// =====================================================
-// FORMAT WEATHER LAST UPDATED
-// =====================================================
-
-function formatWeatherTime(dateValue) {
-  if (!dateValue) {
-    return "";
-  }
-
-  try {
-    const date =
-      dateValue instanceof Date
-        ? dateValue
-        : new Date(dateValue);
-
-    if (
-      Number.isNaN(
-        date.getTime()
-      )
-    ) {
-      return "";
-    }
-
-    return date.toLocaleString(
-      undefined,
-      {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      }
-    );
-  } catch {
-    return "";
-  }
-}
-
-// =====================================================
-// UNIQUE LOCATIONS
-// =====================================================
-
-function removeDuplicateLocations(
-  locations
-) {
-  return locations.filter(
-    (location, index, array) =>
-      index ===
-      array.findIndex(
-        (item) => {
-          if (
-            item.id != null &&
-            location.id != null
-          ) {
-            return (
-              item.id ===
-              location.id
-            );
-          }
-
-          return (
-            item.name ===
-              location.name &&
-            Number(
-              item.latitude
-            ) ===
-              Number(
-                location.latitude
-              ) &&
-            Number(
-              item.longitude
-            ) ===
-              Number(
-                location.longitude
-              )
-          );
-        }
-      )
-  );
-}
-
-// =====================================================
-// ROAD DISTANCE CACHE HELPERS
-// =====================================================
-
-function getRoadDistanceCache() {
-  try {
-    const saved =
-      localStorage.getItem(
-        ROAD_DISTANCE_CACHE_KEY
-      );
-
-    if (!saved) {
-      return {};
-    }
-
-    const parsed =
-      JSON.parse(saved);
-
-    return parsed &&
-      typeof parsed === "object"
-      ? parsed
-      : {};
-  } catch {
-    return {};
-  }
-}
-
-// =====================================================
-// ROAD DISTANCE CACHE KEY
-// =====================================================
-
-function createRoadDistanceKey(
-  startLatitude,
-  startLongitude,
-  endLatitude,
-  endLongitude
-) {
-  return [
-    Number(startLatitude).toFixed(5),
-    Number(startLongitude).toFixed(5),
-    Number(endLatitude).toFixed(5),
-    Number(endLongitude).toFixed(5),
-  ].join("_");
-}
-
-// =====================================================
-// GET ROAD DISTANCE USING OSRM
-// =====================================================
-
-async function getRoadDistance(
-  userLocation,
-  destination
-) {
-  if (
-    !userLocation ||
-    !destination
-  ) {
+const normalizeAlert = (data) => {
+  if (!data) {
     return null;
   }
 
-  const startLatitude =
-    Number(
-      userLocation.latitude
-    );
+  const source =
+    data.data ||
+    data.alert ||
+    data.result ||
+    data;
 
-  const startLongitude =
-    Number(
-      userLocation.longitude
-    );
+  return {
+    id:
+      firstDefined(
+        source.id,
+        source.alertId
+      ) || null,
 
-  const endLatitude =
-    Number(
-      destination.latitude
-    );
+    title:
+      firstDefined(
+        source.title,
+        source.name,
+        source.alertType,
+        source.disasterType
+      ) || "Disaster Alert",
 
-  const endLongitude =
-    Number(
-      destination.longitude
-    );
+    disasterType:
+      firstDefined(
+        source.disasterType,
+        source.type,
+        source.alertType
+      ) || "Emergency",
 
-  if (
-    !Number.isFinite(
-      startLatitude
-    ) ||
-    !Number.isFinite(
-      startLongitude
-    ) ||
-    !Number.isFinite(
-      endLatitude
-    ) ||
-    !Number.isFinite(
-      endLongitude
-    )
-  ) {
-    return null;
-  }
+    location:
+      firstDefined(
+        source.location,
+        source.city,
+        source.area
+      ) || "Your Area",
 
-  const cacheKey =
-    createRoadDistanceKey(
-      startLatitude,
-      startLongitude,
-      endLatitude,
-      endLongitude
-    );
+    severity:
+      firstDefined(
+        source.severity,
+        source.level,
+        source.alertLevel
+      ) || "High",
 
-  const cache =
-    getRoadDistanceCache();
+    message:
+      firstDefined(
+        source.message,
+        source.description,
+        source.details
+      ) || "Please stay alert and follow safety instructions.",
 
-  if (
-    cache[cacheKey] &&
-    Number.isFinite(
-      Number(
-        cache[cacheKey].distance
-      )
-    )
-  ) {
-    return {
-      distance:
-        Number(
-          cache[cacheKey].distance
-        ),
+    active:
+      source.active !== undefined
+        ? Boolean(source.active)
+        : true,
+  };
+};
 
-      duration:
-        Number(
-          cache[cacheKey].duration ||
+const normalizeShelter = (item, index = 0) => {
+  const latitude = firstDefined(
+    item.latitude,
+    item.lat,
+    item.location?.latitude,
+    item.location?.lat
+  );
+
+  const longitude = firstDefined(
+    item.longitude,
+    item.lng,
+    item.lon,
+    item.location?.longitude,
+    item.location?.lng
+  );
+
+  return {
+    ...item,
+
+    id:
+      firstDefined(
+        item.id,
+        item.safeLocationId,
+        item.shelterId
+      ) || `shelter-${index}`,
+
+    name:
+      firstDefined(
+        item.name,
+        item.locationName,
+        item.shelterName
+      ) || "Safe Shelter",
+
+    address:
+      firstDefined(
+        item.address,
+        item.locationAddress,
+        item.area
+      ) || "Nearby safe location",
+
+    latitude:
+      latitude !== null
+        ? Number(latitude)
+        : null,
+
+    longitude:
+      longitude !== null
+        ? Number(longitude)
+        : null,
+
+    beds: numberValue(
+      firstDefined(
+        item.availableBeds,
+        item.bedsAvailable,
+        item.capacityAvailable,
+        item.capacity,
+        item.beds
+      ),
+      0
+    ),
+
+    elevation: numberValue(
+      firstDefined(
+        item.elevation,
+        item.elevationMeters,
+        item.altitude
+      ),
+      0
+    ),
+
+    image:
+      firstDefined(
+        item.image,
+        item.imageUrl,
+        item.photo,
+        item.photoUrl
+      ) || null,
+
+    distanceKm:
+      firstDefined(
+        item.distanceKm,
+        item.distance,
+        item.roadDistanceKm
+      ) !== null
+        ? numberValue(
+            firstDefined(
+              item.distanceKm,
+              item.distance,
+              item.roadDistanceKm
+            ),
             0
-        ),
+          )
+        : null,
+  };
+};
 
-      fromCache: true,
-    };
-  }
+// ============================================================
+// COMPONENT
+// ============================================================
 
-  try {
-    const url =
-      `${OSRM_URL}/` +
-      `${startLongitude},${startLatitude};` +
-      `${endLongitude},${endLatitude}` +
-      `?overview=false`;
+export default function Dashboard() {
+  const navigate = useNavigate();
 
-    const response =
-      await axios.get(
-        url,
-        {
-          timeout: 8000,
-        }
-      );
+  // ==========================================================
+  // STATE
+  // ==========================================================
 
-    const route =
-      response.data?.routes?.[0];
-
-    if (!route) {
-      return null;
-    }
-
-    const roadDistance =
-      Number(route.distance) /
-      1000;
-
-    const duration =
-      Number(route.duration);
-
-    if (
-      !Number.isFinite(
-        roadDistance
-      )
-    ) {
-      return null;
-    }
-
-    const updatedCache =
-      getRoadDistanceCache();
-
-    updatedCache[cacheKey] = {
-      distance:
-        roadDistance,
-
-      duration,
-
-      savedAt:
-        new Date().toISOString(),
-    };
-
-    localStorage.setItem(
-      ROAD_DISTANCE_CACHE_KEY,
-      JSON.stringify(
-        updatedCache
-      )
-    );
-
-    return {
-      distance:
-        roadDistance,
-
-      duration,
-
-      fromCache: false,
-    };
-  } catch (error) {
-
-    console.error(
-      "Road distance error:",
-      error
-    );
-
-    return null;
-  }
-}
-
-// =====================================================
-// DASHBOARD
-// =====================================================
-
-function Dashboard() {
-
-  // ===================================================
-  // LOCATION
-  // ===================================================
-
-  const [
-    userLocation,
-    setUserLocation,
-  ] = useState(null);
-
-  // ===================================================
-  // INTERNET
-  // ===================================================
-
-  const [
-    isOnline,
-    setIsOnline,
-  ] = useState(
-    typeof navigator !==
-      "undefined"
-      ? navigator.onLine
-      : true
+  const [user, setUser] = useState(() =>
+    getCurrentUser()
   );
 
-  // ===================================================
-  // ALERT
-  // ===================================================
+  const [online, setOnline] = useState(
+    navigator.onLine
+  );
 
-  const [
-    alert,
-    setAlert,
-  ] = useState(null);
+  const [mobileMenuOpen, setMobileMenuOpen] =
+    useState(false);
 
-  const [
-    loadingAlert,
-    setLoadingAlert,
-  ] = useState(true);
+  const [alert, setAlert] = useState(() =>
+    normalizeAlert(
+      getStoredJson(ALERT_CACHE_KEY)
+    )
+  );
 
-  // ===================================================
-  // WEATHER
-  // ===================================================
+  const [weather, setWeather] = useState(() =>
+    normalizeWeather(
+      getStoredJson(WEATHER_CACHE_KEY)
+    )
+  );
 
-  const [
-    weather,
-    setWeather,
-  ] = useState(null);
+  const [shelters, setShelters] = useState(() =>
+    getStoredJson(SHELTER_CACHE_KEY, []).map(
+      (item, index) =>
+        normalizeShelter(item, index)
+    )
+  );
 
-  const [
-    loadingWeather,
-    setLoadingWeather,
-  ] = useState(false);
+  const [location, setLocation] = useState(() =>
+    getStoredJson(USER_LOCATION_KEY)
+  );
 
-  const [
-    weatherLastUpdated,
-    setWeatherLastUpdated,
-  ] = useState(null);
+  const [loadingShelters, setLoadingShelters] =
+    useState(false);
 
-  // ===================================================
-  // SAFE LOCATIONS
-  // ===================================================
+  const [loadingWeather, setLoadingWeather] =
+    useState(false);
 
-  const [
-    safestLocations,
-    setSafestLocations,
-  ] = useState([]);
+  const [loadingAlert, setLoadingAlert] =
+    useState(false);
 
-  const [
-    allSafeLocations,
-    setAllSafeLocations,
-  ] = useState([]);
+  const [refreshing, setRefreshing] =
+    useState(false);
 
-  const [
-    loadingLocations,
-    setLoadingLocations,
-  ] = useState(false);
+  const [locationLoading, setLocationLoading] =
+    useState(false);
 
-  // ===================================================
-  // MAIN MAP SELECTED LOCATION
-  // ===================================================
+  const [sosLoading, setSosLoading] =
+    useState(false);
 
-  const [
-    selectedShelter,
-    setSelectedShelter,
-  ] = useState(null);
+  const [sosPressed, setSosPressed] =
+    useState(false);
 
-  // ===================================================
-  // SECOND MAP SELECTED LOCATION
-  // ===================================================
+  const [showAlert, setShowAlert] =
+    useState(true);
 
-  const [
-    selectedOfflineLocation,
-    setSelectedOfflineLocation,
-  ] = useState(null);
+  const [mapMode, setMapMode] =
+    useState("map");
 
-  // ===================================================
-  // ONLINE / OFFLINE LISTENER
-  // ===================================================
+  const [selectedShelter, setSelectedShelter] =
+    useState(null);
+
+  const [errorMessage, setErrorMessage] =
+    useState("");
+
+  const sosTimerRef = useRef(null);
+
+  // ==========================================================
+  // USER
+  // ==========================================================
 
   useEffect(() => {
+    const currentUser = getCurrentUser();
 
+    if (currentUser) {
+      setUser(currentUser);
+    }
+  }, []);
+
+  // ==========================================================
+  // ONLINE / OFFLINE
+  // ==========================================================
+
+  useEffect(() => {
     const handleOnline = () => {
-      setIsOnline(true);
+      setOnline(true);
     };
 
     const handleOffline = () => {
-      setIsOnline(false);
+      setOnline(false);
     };
 
     window.addEventListener(
@@ -701,7 +621,6 @@ function Dashboard() {
     );
 
     return () => {
-
       window.removeEventListener(
         "online",
         handleOnline
@@ -711,2547 +630,1678 @@ function Dashboard() {
         "offline",
         handleOffline
       );
-
     };
-
   }, []);
 
-  // ===================================================
-  // FIREBASE PUSH NOTIFICATIONS
-  // ===================================================
-
-  const enableFirebaseNotifications = async () => {
-
-    try {
-
-      const token =
-        await requestNotificationPermission();
-
-      if (token) {
-
-        console.log("=================================");
-        console.log("FCM TOKEN RECEIVED:");
-        console.log(token);
-        console.log("=================================");
-
-        // The FCM token will be sent to Spring Boot
-        // and stored in MySQL in the next backend step.
-      }
-
-    } catch (error) {
-
-      console.error(
-        "Firebase notification setup error:",
-        error
-      );
-
-    }
-
-  };
-
-  useEffect(() => {
-
-    const unsubscribe = listenForMessages((payload) => {
-
-      console.log("=================================");
-      console.log("FOREGROUND FIREBASE NOTIFICATION:");
-      console.log(payload);
-      console.log("=================================");
-
-      const title =
-        payload?.notification?.title ||
-        payload?.data?.title ||
-        "Disaster Alert";
-
-      const body =
-        payload?.notification?.body ||
-        payload?.data?.body ||
-        "A new emergency alert has been received.";
-
-      if (Notification.permission === "granted") {
-
-        new Notification(title, {
-          body,
-          icon: "/firebase-logo.png",
-          data: payload?.data || {},
-        });
-
-      }
-
-    });
-
-    return () => {
-
-      if (typeof unsubscribe === "function") {
-        unsubscribe();
-      }
-
-    };
-
-  }, []);
-
-  // ===================================================
+  // ==========================================================
   // GET USER LOCATION
-  // ===================================================
+  // ==========================================================
 
-  const getLocation =
-    useCallback(() => {
-
-      if (
-        !navigator.geolocation
-      ) {
-
-        window.alert(
-          "Geolocation is not supported by this browser."
-        );
+  const getUserLocation = useCallback(
+    (silent = false) => {
+      if (!navigator.geolocation) {
+        if (!silent) {
+          setErrorMessage(
+            "Location services are not supported by this browser."
+          );
+        }
 
         return;
       }
 
+      if (!silent) {
+        setLocationLoading(true);
+      }
+
       navigator.geolocation.getCurrentPosition(
-
         (position) => {
-
-          const location = {
-
-            latitude:
-              position.coords.latitude,
-
-            longitude:
-              position.coords.longitude,
-
+          const newLocation = {
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+            accuracy: position.coords.accuracy,
           };
 
-          setUserLocation(
-            location
+          setLocation(newLocation);
+
+          setStoredJson(
+            USER_LOCATION_KEY,
+            newLocation
           );
 
-          localStorage.setItem(
-            "lastKnownLocation",
-            JSON.stringify(
-              location
-            )
-          );
-
+          setLocationLoading(false);
+          setErrorMessage("");
         },
 
-        (error) => {
+        () => {
+          setLocationLoading(false);
 
-          console.error(
-            "Location error:",
-            error
-          );
-
-          const savedLocation =
-            localStorage.getItem(
-              "lastKnownLocation"
+          if (!silent) {
+            setErrorMessage(
+              "Unable to get your current location. Please allow location access."
             );
-
-          if (savedLocation) {
-
-            try {
-
-              setUserLocation(
-                JSON.parse(
-                  savedLocation
-                )
-              );
-
-            } catch {
-
-              setUserLocation(
-                null
-              );
-
-            }
-
-          } else {
-
-            window.alert(
-              "Unable to get your location. Please allow location access."
-            );
-
           }
-
         },
 
         {
           enableHighAccuracy: true,
-          timeout: 10000,
+          timeout: 15000,
           maximumAge: 30000,
         }
-
       );
-
-    }, []);
-
-  // ===================================================
-  // INITIAL LOCATION
-  // ===================================================
+    },
+    []
+  );
 
   useEffect(() => {
+    getUserLocation(true);
+  }, [getUserLocation]);
 
-    const savedLocation =
-      localStorage.getItem(
-        "lastKnownLocation"
-      );
+  // ==========================================================
+  // FETCH ALERT
+  // ==========================================================
 
-    if (savedLocation) {
-
-      try {
-
-        setUserLocation(
-          JSON.parse(
-            savedLocation
-          )
-        );
-
-      } catch {
-
-        getLocation();
-
-      }
-
-    } else {
-
-      getLocation();
-
-    }
-
-  }, [getLocation]);
-
-  // ===================================================
-  // GET LATEST ALERT
-  // ===================================================
-
-  const getLatestAlert =
-    useCallback(async () => {
-
-      try {
-
-        setLoadingAlert(true);
-
-        if (!navigator.onLine) {
-
-          throw new Error(
-            "Offline"
-          );
-
-        }
-
-        const response =
-          await axios.get(
-            `${API_BASE_URL}/disaster-alert/latest`,
-            {
-              timeout: 5000,
-            }
-          );
-
-        const data =
-          response.data || null;
-
-        setAlert(data);
-
-        if (data) {
-
-          localStorage.setItem(
-            "latestDisasterAlert",
-            JSON.stringify(
-              data
-            )
-          );
-
-        }
-
-      } catch (error) {
-
-        console.error(
-          "Alert loading error:",
-          error
-        );
-
-        const savedAlert =
-          localStorage.getItem(
-            "latestDisasterAlert"
-          );
-
-        if (savedAlert) {
-
-          try {
-
-            setAlert(
-              JSON.parse(
-                savedAlert
-              )
-            );
-
-          } catch {
-
-            setAlert(null);
-
-          }
-
-        }
-
-      } finally {
-
-        setLoadingAlert(false);
-
-      }
-
-    }, []);
-
-  // ===================================================
-  // LOAD ALERT
-  // ===================================================
-
-  useEffect(() => {
-
-    getLatestAlert();
-
-  }, [
-    getLatestAlert,
-  ]);
-
-  // ===================================================
-  // GET SAFEST LOCATIONS
-  // ===================================================
-
-  const getSafestLocations =
-    useCallback(async () => {
-
-      if (!userLocation) {
+  const fetchAlert = useCallback(
+    async (silent = false) => {
+      if (!online) {
         return;
       }
 
-      try {
+      if (!silent) {
+        setLoadingAlert(true);
+      }
 
-        setLoadingLocations(
-          true
+      try {
+        const response = await apiFetch(
+          `${API_BASE}/disaster-alert/latest`
         );
 
-        let locations = [];
-
-        // ---------------------------------------------
-        // OFFLINE
-        // ---------------------------------------------
-
-        if (!isOnline) {
-
-          const savedLocations =
-            localStorage.getItem(
-              SAFE_LOCATIONS_CACHE_KEY
-            );
-
-          if (!savedLocations) {
-
-            setSafestLocations([]);
-            setAllSafeLocations([]);
-
-            return;
-          }
-
-          locations =
-            JSON.parse(
-              savedLocations
-            );
-
-          setAllSafeLocations(
-            Array.isArray(
-              locations
-            )
-              ? locations
-              : []
+        if (!response.ok) {
+          throw new Error(
+            `Alert request failed: ${response.status}`
           );
-
         }
 
-        // ---------------------------------------------
-        // ONLINE
-        // ---------------------------------------------
+        const data = await safeJson(response);
 
-        else {
+        const normalized =
+          normalizeAlert(data);
 
-          const response =
-            await axios.get(
-              `${API_BASE_URL}/safe-locations`,
-              {
-                timeout: 5000,
-              }
-            );
+        if (normalized) {
+          setAlert(normalized);
 
-          locations =
-            Array.isArray(
-              response.data
-            )
-              ? response.data
-              : [];
-
-          setAllSafeLocations(
-            locations
+          setStoredJson(
+            ALERT_CACHE_KEY,
+            normalized
           );
-
-          localStorage.setItem(
-            SAFE_LOCATIONS_CACHE_KEY,
-            JSON.stringify(
-              locations
-            )
-          );
-
         }
 
-        // ---------------------------------------------
-        // REMOVE FOOD AND POLICE FROM
-        // SAFEST LOCATION RANKING
-        // ---------------------------------------------
+        setErrorMessage("");
+      } catch (error) {
+        console.error(
+          "Failed to load disaster alert:",
+          error
+        );
+      } finally {
+        if (!silent) {
+          setLoadingAlert(false);
+        }
+      }
+    },
+    [online]
+  );
 
-        const emergencyLocations =
-          locations.filter(
-            (location) =>
-              !isServiceLocation(
-                location
-              )
-          );
+  // ==========================================================
+  // FETCH WEATHER
+  // ==========================================================
 
-        // ---------------------------------------------
-        // CALCULATE STRAIGHT-LINE DISTANCE
-        // ---------------------------------------------
+  const fetchWeather = useCallback(
+    async (silent = false) => {
+      if (!online) {
+        return;
+      }
 
-        const nearbyLocations =
-          emergencyLocations
+      if (!silent) {
+        setLoadingWeather(true);
+      }
 
-            .filter(
-              (location) =>
-                location.latitude != null &&
-                location.longitude != null
-            )
+      try {
+        let url = `${API_BASE}/weather`;
 
-            .map(
-              (location) => ({
-
-                ...location,
-
-                distance:
-                  calculateDistanceKm(
-
-                    Number(
-                      userLocation.latitude
-                    ),
-
-                    Number(
-                      userLocation.longitude
-                    ),
-
-                    Number(
-                      location.latitude
-                    ),
-
-                    Number(
-                      location.longitude
-                    )
-
-                  ),
-
-              })
-            )
-
-            .filter(
-              (location) =>
-                location.distance <=
-                MAX_DISTANCE_KM
-            );
-
-        // ---------------------------------------------
-        // GET ROAD DISTANCES
-        // ---------------------------------------------
-
-        let locationsWithRoadDistance =
-          [];
-
-        if (isOnline) {
-
-          locationsWithRoadDistance =
-            await Promise.all(
-
-              nearbyLocations.map(
-                async (location) => {
-
-                  const road =
-                    await getRoadDistance(
-                      userLocation,
-                      location
-                    );
-
-                  return {
-
-                    ...location,
-
-                    roadDistance:
-                      road?.distance ??
-                      null,
-
-                    roadDuration:
-                      road?.duration ??
-                      null,
-
-                    roadDistanceFromCache:
-                      road?.fromCache ??
-                      false,
-
-                  };
-
-                }
-              )
-
-            );
-
-        } else {
-
-          const roadCache =
-            getRoadDistanceCache();
-
-          locationsWithRoadDistance =
-            nearbyLocations.map(
-              (location) => {
-
-                const key =
-                  createRoadDistanceKey(
-
-                    userLocation.latitude,
-
-                    userLocation.longitude,
-
-                    location.latitude,
-
-                    location.longitude
-
-                  );
-
-                const cached =
-                  roadCache[key];
-
-                return {
-
-                  ...location,
-
-                  roadDistance:
-                    cached &&
-                    Number.isFinite(
-                      Number(
-                        cached.distance
-                      )
-                    )
-                      ? Number(
-                          cached.distance
-                        )
-                      : null,
-
-                  roadDuration:
-                    cached &&
-                    Number.isFinite(
-                      Number(
-                        cached.duration
-                      )
-                    )
-                      ? Number(
-                          cached.duration
-                        )
-                      : null,
-
-                  roadDistanceFromCache:
-                    Boolean(cached),
-
-                };
-
-              }
-            );
-
+        if (location?.latitude && location?.longitude) {
+          url +=
+            `?lat=${encodeURIComponent(
+              location.latitude
+            )}` +
+            `&lon=${encodeURIComponent(
+              location.longitude
+            )}`;
         }
 
-        // ---------------------------------------------
-        // DISASTER TYPE
-        // ---------------------------------------------
+        const response = await apiFetch(url);
 
-        const disasterType =
-          normalizeDisasterType(
-            alert?.disasterType
+        if (!response.ok) {
+          throw new Error(
+            `Weather request failed: ${response.status}`
           );
+        }
 
-        let sortedLocations =
-          [];
+        const data = await safeJson(response);
 
-        // ---------------------------------------------
-        // HEAVY RAIN
-        // HIGHER ELEVATION FIRST
-        // ---------------------------------------------
+        const normalized =
+          normalizeWeather(data);
+
+        if (normalized) {
+          setWeather(normalized);
+
+          setStoredJson(
+            WEATHER_CACHE_KEY,
+            normalized
+          );
+        }
+      } catch (error) {
+        console.error(
+          "Failed to load weather:",
+          error
+        );
+      } finally {
+        if (!silent) {
+          setLoadingWeather(false);
+        }
+      }
+    },
+    [
+      online,
+      location?.latitude,
+      location?.longitude,
+    ]
+  );
+
+  // ==========================================================
+  // FETCH SAFE LOCATIONS
+  // ==========================================================
+
+  const fetchShelters = useCallback(
+    async (silent = false) => {
+      if (!online) {
+        return;
+      }
+
+      if (!silent) {
+        setLoadingShelters(true);
+      }
+
+      try {
+        let url = `${API_BASE}/safe-locations`;
 
         if (
-          disasterType ===
-          "Heavy Rain"
+          location?.latitude !== undefined &&
+          location?.longitude !== undefined
         ) {
-
-          sortedLocations =
-            [
-              ...locationsWithRoadDistance,
-            ].sort(
-              (a, b) => {
-
-                const elevationA =
-                  Number(
-                    a.elevation ??
-                      0
-                  );
-
-                const elevationB =
-                  Number(
-                    b.elevation ??
-                      0
-                  );
-
-                if (
-                  elevationA !==
-                  elevationB
-                ) {
-
-                  return (
-                    elevationB -
-                    elevationA
-                  );
-
-                }
-
-                const distanceA =
-                  a.roadDistance ??
-                  a.distance;
-
-                const distanceB =
-                  b.roadDistance ??
-                  b.distance;
-
-                return (
-                  distanceA -
-                  distanceB
-                );
-
-              }
-            );
-
+          url =
+            `${API_BASE}/safe-locations/nearby` +
+            `?latitude=${encodeURIComponent(
+              location.latitude
+            )}` +
+            `&longitude=${encodeURIComponent(
+              location.longitude
+            )}` +
+            `&radius=${MAX_DISTANCE_KM}`;
         }
 
-        // ---------------------------------------------
-        // EXTREME HEAT
-        // ---------------------------------------------
+        const response = await apiFetch(url);
 
-        else if (
-          disasterType ===
-          "Extreme Heat"
-        ) {
-
-          sortedLocations =
-            [
-              ...locationsWithRoadDistance,
-            ].sort(
-              (a, b) => {
-
-                const scoreA =
-                  getHeatSafetyScore(
-                    a
-                  );
-
-                const scoreB =
-                  getHeatSafetyScore(
-                    b
-                  );
-
-                if (
-                  scoreA !==
-                  scoreB
-                ) {
-
-                  return (
-                    scoreB -
-                    scoreA
-                  );
-
-                }
-
-                const distanceA =
-                  a.roadDistance ??
-                  a.distance;
-
-                const distanceB =
-                  b.roadDistance ??
-                  b.distance;
-
-                return (
-                  distanceA -
-                  distanceB
-                );
-
-              }
-            );
-
-        }
-
-        // ---------------------------------------------
-        // NO DISASTER
-        // ---------------------------------------------
-
-        else {
-
-          sortedLocations =
-            [
-              ...locationsWithRoadDistance,
-            ].sort(
-              (a, b) => {
-
-                const distanceA =
-                  a.roadDistance ??
-                  a.distance;
-
-                const distanceB =
-                  b.roadDistance ??
-                  b.distance;
-
-                return (
-                  distanceA -
-                  distanceB
-                );
-
-              }
-            );
-
-        }
-
-        // ---------------------------------------------
-        // REMOVE DUPLICATES
-        // ---------------------------------------------
-
-        const uniqueLocations =
-          removeDuplicateLocations(
-            sortedLocations
+        if (!response.ok) {
+          throw new Error(
+            `Shelter request failed: ${response.status}`
           );
+        }
 
-        // ---------------------------------------------
-        // TOP 5
-        // ---------------------------------------------
+        const data = await safeJson(response);
 
-        const finalLocations =
-          uniqueLocations
-            .slice(0, 5)
-            .map(
-              (
-                location,
-                index
-              ) => ({
+        const list = Array.isArray(data)
+          ? data
+          : Array.isArray(data?.content)
+          ? data.content
+          : Array.isArray(data?.data)
+          ? data.data
+          : Array.isArray(data?.safeLocations)
+          ? data.safeLocations
+          : Array.isArray(data?.shelters)
+          ? data.shelters
+          : [];
 
-                ...location,
-
-                rank:
-                  index + 1,
-
-                heatSafetyScore:
-                  getHeatSafetyScore(
-                    location
-                  ),
-
-              })
-            );
-
-        setSafestLocations(
-          finalLocations
+        const normalized = list.map(
+          (item, index) =>
+            normalizeShelter(item, index)
         );
 
-      } catch (error) {
+        setShelters(normalized);
 
+        setStoredJson(
+          SHELTER_CACHE_KEY,
+          normalized
+        );
+      } catch (error) {
         console.error(
-          "Safe location error:",
+          "Failed to load safe locations:",
           error
         );
-
-        try {
-
-          const savedLocations =
-            localStorage.getItem(
-              SAFE_LOCATIONS_CACHE_KEY
-            );
-
-          if (!savedLocations) {
-
-            setSafestLocations([]);
-
-            return;
-
-          }
-
-          const cachedLocations =
-            JSON.parse(
-              savedLocations
-            );
-
-          setAllSafeLocations(
-            Array.isArray(
-              cachedLocations
-            )
-              ? cachedLocations
-              : []
-          );
-
-          const roadCache =
-            getRoadDistanceCache();
-
-          const nearby =
-            cachedLocations
-
-              .filter(
-                (location) =>
-                  !isServiceLocation(
-                    location
-                  )
-              )
-
-              .filter(
-                (location) =>
-                  location.latitude != null &&
-                  location.longitude != null
-              )
-
-              .map(
-                (location) => {
-
-                  const distance =
-                    calculateDistanceKm(
-
-                      Number(
-                        userLocation.latitude
-                      ),
-
-                      Number(
-                        userLocation.longitude
-                      ),
-
-                      Number(
-                        location.latitude
-                      ),
-
-                      Number(
-                        location.longitude
-                      )
-
-                    );
-
-                  const key =
-                    createRoadDistanceKey(
-
-                      userLocation.latitude,
-
-                      userLocation.longitude,
-
-                      location.latitude,
-
-                      location.longitude
-
-                    );
-
-                  const cachedRoad =
-                    roadCache[key];
-
-                  return {
-
-                    ...location,
-
-                    distance,
-
-                    roadDistance:
-                      cachedRoad &&
-                      Number.isFinite(
-                        Number(
-                          cachedRoad.distance
-                        )
-                      )
-                        ? Number(
-                            cachedRoad.distance
-                          )
-                        : null,
-
-                    roadDuration:
-                      cachedRoad &&
-                      Number.isFinite(
-                        Number(
-                          cachedRoad.duration
-                        )
-                      )
-                        ? Number(
-                            cachedRoad.duration
-                          )
-                        : null,
-
-                  };
-
-                }
-              )
-
-              .filter(
-                (location) =>
-                  location.distance <=
-                  MAX_DISTANCE_KM
-              )
-
-              .sort(
-                (a, b) => {
-
-                  const distanceA =
-                    a.roadDistance ??
-                    a.distance;
-
-                  const distanceB =
-                    b.roadDistance ??
-                    b.distance;
-
-                  return (
-                    distanceA -
-                    distanceB
-                  );
-
-                }
-              );
-
-          const unique =
-            removeDuplicateLocations(
-              nearby
-            );
-
-          setSafestLocations(
-
-            unique
-              .slice(0, 5)
-              .map(
-                (
-                  location,
-                  index
-                ) => ({
-
-                  ...location,
-
-                  rank:
-                    index + 1,
-
-                  heatSafetyScore:
-                    getHeatSafetyScore(
-                      location
-                    ),
-
-                })
-              )
-
-          );
-
-        } catch {
-
-          setSafestLocations([]);
-
-        }
-
       } finally {
-
-        setLoadingLocations(
-          false
-        );
-
-      }
-
-    }, [
-      userLocation,
-      alert,
-      isOnline,
-    ]);
-
-  // ===================================================
-  // LOAD SAFE LOCATIONS
-  // ===================================================
-
-  useEffect(() => {
-
-    getSafestLocations();
-
-  }, [
-    getSafestLocations,
-  ]);
-
-  // ===================================================
-  // LOAD CACHED WEATHER
-  // ===================================================
-
-  const loadCachedWeather =
-    useCallback(() => {
-
-      try {
-
-        const savedWeather =
-          localStorage.getItem(
-            WEATHER_CACHE_KEY
-          );
-
-        const savedTime =
-          localStorage.getItem(
-            WEATHER_CACHE_TIME_KEY
-          );
-
-        if (savedWeather) {
-
-          const parsedWeather =
-            JSON.parse(
-              savedWeather
-            );
-
-          setWeather(
-            parsedWeather
-          );
-
-          if (savedTime) {
-
-            setWeatherLastUpdated(
-              new Date(savedTime)
-            );
-
-          }
-
-          return true;
-
+        if (!silent) {
+          setLoadingShelters(false);
         }
-
-      } catch (error) {
-
-        console.error(
-          "Cached weather loading error:",
-          error
-        );
-
       }
+    },
+    [
+      online,
+      location?.latitude,
+      location?.longitude,
+    ]
+  );
 
-      return false;
-
-    }, []);
-
-  // ===================================================
-  // GET WEATHER
-  // ===================================================
-
-  const getWeather =
-    useCallback(async () => {
-
-      if (!userLocation) {
-        return;
-      }
-
-      if (!isOnline) {
-
-        setLoadingWeather(false);
-
-        loadCachedWeather();
-
-        return;
-
-      }
-
-      try {
-
-        setLoadingWeather(true);
-
-        const response =
-          await axios.get(
-            `${API_BASE_URL}/weather`,
-            {
-              params: {
-
-                latitude:
-                  userLocation.latitude,
-
-                longitude:
-                  userLocation.longitude,
-
-              },
-
-              timeout: 5000,
-            }
-          );
-
-        const weatherData =
-          response.data;
-
-        setWeather(
-          weatherData
-        );
-
-        localStorage.setItem(
-          WEATHER_CACHE_KEY,
-          JSON.stringify(
-            weatherData
-          )
-        );
-
-        const updatedAt =
-          new Date().toISOString();
-
-        localStorage.setItem(
-          WEATHER_CACHE_TIME_KEY,
-          updatedAt
-        );
-
-        setWeatherLastUpdated(
-          new Date(updatedAt)
-        );
-
-      } catch (error) {
-
-        console.error(
-          "Weather error:",
-          error
-        );
-
-        loadCachedWeather();
-
-      } finally {
-
-        setLoadingWeather(false);
-
-      }
-
-    }, [
-      userLocation,
-      isOnline,
-      loadCachedWeather,
-    ]);
-
-  // ===================================================
-  // LOAD WEATHER
-  // ===================================================
+  // ==========================================================
+  // INITIAL DATA
+  // ==========================================================
 
   useEffect(() => {
-
-    getWeather();
-
-  }, [
-    getWeather,
-  ]);
-
-  // ===================================================
-  // REFRESH WEATHER WHEN INTERNET RETURNS
-  // ===================================================
+    fetchAlert(true);
+  }, [fetchAlert]);
 
   useEffect(() => {
+    fetchWeather(true);
+  }, [fetchWeather]);
 
-    const handleOnline =
-      () => {
+  useEffect(() => {
+    fetchShelters(true);
+  }, [fetchShelters]);
 
-        setIsOnline(true);
+  // ==========================================================
+  // PERIODIC ALERT REFRESH
+  // ==========================================================
 
-      };
+  useEffect(() => {
+    if (!online) {
+      return undefined;
+    }
 
-    const handleOffline =
-      () => {
-
-        setIsOnline(false);
-
-        loadCachedWeather();
-
-      };
-
-    window.addEventListener(
-      "online",
-      handleOnline
-    );
-
-    window.addEventListener(
-      "offline",
-      handleOffline
-    );
+    const interval = setInterval(() => {
+      fetchAlert(true);
+    }, 30000);
 
     return () => {
-
-      window.removeEventListener(
-        "online",
-        handleOnline
-      );
-
-      window.removeEventListener(
-        "offline",
-        handleOffline
-      );
-
+      clearInterval(interval);
     };
+  }, [online, fetchAlert]);
 
-  }, [
-    loadCachedWeather,
-  ]);
+  // ==========================================================
+  // PERIODIC LOCATION UPDATE
+  // ==========================================================
 
-  // ===================================================
-  // WEATHER VALUES
-  // ===================================================
+  useEffect(() => {
+    if (!navigator.geolocation) {
+      return undefined;
+    }
 
-  const temperature =
-    weather?.temperature ??
-    weather?.main?.temp ??
-    null;
+    const interval = setInterval(() => {
+      getUserLocation(true);
+    }, 60000);
 
-  const humidity =
-    weather?.humidity ??
-    weather?.main?.humidity ??
-    null;
+    return () => {
+      clearInterval(interval);
+    };
+  }, [getUserLocation]);
 
-  const windSpeed =
-    weather?.windSpeed ??
-    weather?.wind?.speed ??
-    null;
+  // ==========================================================
+  // CALCULATE SHELTER DISTANCES
+  // ==========================================================
 
-  const weatherDescription =
-    weather?.description ??
-    weather?.weather?.[0]
-      ?.description ??
-    null;
+  const sheltersWithDistance = useMemo(() => {
+    return shelters
+      .map((shelter) => {
+        let distance = shelter.distanceKm;
 
-  // ===================================================
-  // CURRENT DISASTER
-  // ===================================================
+        if (
+          location?.latitude !== undefined &&
+          location?.longitude !== undefined &&
+          shelter.latitude !== null &&
+          shelter.longitude !== null
+        ) {
+          const straightLineDistance =
+            calculateDistanceKm(
+              location.latitude,
+              location.longitude,
+              shelter.latitude,
+              shelter.longitude
+            );
 
-  const currentDisaster =
-    alert?.disasterType
-      ? normalizeDisasterType(
-          alert.disasterType
-        )
-      : null;
-
-  // ===================================================
-  // CURRENT WEATHER CONDITION
-  // ===================================================
-
-  const weatherCondition =
-    getWeatherCondition(
-      weather,
-      currentDisaster
-    );
-
-  // ===================================================
-  // FOOD SERVICES
-  // ===================================================
-
-  const foodServices =
-    allSafeLocations
-      .filter(
-        (location) =>
-          normalizeServiceType(
-            location?.type
-          ) === "FOOD"
-      )
-      .filter(
-        (location) =>
-          userLocation &&
-          location.latitude != null &&
-          location.longitude != null &&
-          calculateDistanceKm(
-
-            Number(
-              userLocation.latitude
-            ),
-
-            Number(
-              userLocation.longitude
-            ),
-
-            Number(
-              location.latitude
-            ),
-
-            Number(
-              location.longitude
-            )
-
-          ) <= MAX_DISTANCE_KM
-      );
-
-  // ===================================================
-  // POLICE SERVICES
-  // ===================================================
-
-  const policeServices =
-    allSafeLocations
-      .filter(
-        (location) =>
-          normalizeServiceType(
-            location?.type
-          ) === "POLICE"
-      )
-      .filter(
-        (location) =>
-          userLocation &&
-          location.latitude != null &&
-          location.longitude != null &&
-          calculateDistanceKm(
-
-            Number(
-              userLocation.latitude
-            ),
-
-            Number(
-              userLocation.longitude
-            ),
-
-            Number(
-              location.latitude
-            ),
-
-            Number(
-              location.longitude
-            )
-
-          ) <= MAX_DISTANCE_KM
-      );
-
-  // ===================================================
-  // OPEN SECOND MAP
-  // ===================================================
-
-  const openOfflineMap =
-    (location) => {
-
-      setSelectedOfflineLocation({
-        ...location,
-      });
-
-      setTimeout(() => {
-
-        const mapSection =
-          document.querySelector(
-            ".offline-map-section"
-          );
-
-        if (mapSection) {
-
-          mapSection.scrollIntoView({
-
-            behavior: "smooth",
-
-            block: "start",
-
-          });
-
+          if (
+            distance === null ||
+            distance === undefined
+          ) {
+            distance = straightLineDistance;
+          }
         }
 
-      }, 200);
+        return {
+          ...shelter,
+          calculatedDistanceKm: distance,
+        };
+      })
+      .sort((a, b) => {
+        const distanceA =
+          a.calculatedDistanceKm ??
+          Number.MAX_SAFE_INTEGER;
 
+        const distanceB =
+          b.calculatedDistanceKm ??
+          Number.MAX_SAFE_INTEGER;
+
+        return distanceA - distanceB;
+      });
+  }, [shelters, location]);
+
+  // ==========================================================
+  // DISPLAY ONLY SAFE LOCATIONS WITHIN 2 KM
+  // ==========================================================
+
+  const nearbyShelters = useMemo(() => {
+    const available =
+      sheltersWithDistance.filter((shelter) => {
+        const distance =
+          shelter.calculatedDistanceKm;
+
+        if (
+          distance === null ||
+          distance === undefined
+        ) {
+          return true;
+        }
+
+        return distance <= MAX_DISTANCE_KM;
+      });
+
+    return available.slice(0, 3);
+  }, [sheltersWithDistance]);
+
+  // ==========================================================
+  // DIRECTIONS
+  // ==========================================================
+
+  const openDirections = useCallback(
+    (shelter) => {
+      if (!shelter) {
+        return;
+      }
+
+      if (
+        shelter.latitude !== null &&
+        shelter.longitude !== null
+      ) {
+        const destination =
+          `${shelter.latitude},${shelter.longitude}`;
+
+        let origin = "";
+
+        if (
+          location?.latitude !== undefined &&
+          location?.longitude !== undefined
+        ) {
+          origin =
+            `${location.latitude},${location.longitude}`;
+        }
+
+        const url = origin
+          ? `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(
+              origin
+            )}&destination=${encodeURIComponent(
+              destination
+            )}&travelmode=driving`
+          : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+              destination
+            )}`;
+
+        window.open(
+          url,
+          "_blank",
+          "noopener,noreferrer"
+        );
+
+        return;
+      }
+
+      if (shelter.address) {
+        const url =
+          `https://www.google.com/maps/search/?api=1&query=` +
+          encodeURIComponent(
+            shelter.address
+          );
+
+        window.open(
+          url,
+          "_blank",
+          "noopener,noreferrer"
+        );
+      }
+    },
+    [location]
+  );
+
+  // ==========================================================
+  // REFRESH ALL
+  // ==========================================================
+
+  const refreshDashboard = async () => {
+    setRefreshing(true);
+
+    try {
+      getUserLocation(true);
+
+      await Promise.all([
+        fetchAlert(false),
+        fetchWeather(false),
+        fetchShelters(false),
+      ]);
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  // ==========================================================
+  // SOS
+  // ==========================================================
+
+  const submitSOS = async () => {
+    if (sosLoading) {
+      return;
+    }
+
+    setSosLoading(true);
+
+    const payload = {
+      latitude:
+        location?.latitude ?? null,
+
+      longitude:
+        location?.longitude ?? null,
+
+      emergencyType: "GENERAL",
+
+      status: "PENDING",
+
+      assignedService: "EMERGENCY",
+
+      userId:
+        user?.id ??
+        user?.userId ??
+        null,
     };
 
-  // ===================================================
-  // CLOSE SECOND MAP
-  // ===================================================
+    try {
+      if (online) {
+        const response = await apiFetch(
+          `${API_BASE}/sos`,
+          {
+            method: "POST",
+            body: JSON.stringify(payload),
+          }
+        );
 
-  const closeOfflineMap =
-    () => {
+        if (!response.ok) {
+          throw new Error(
+            `SOS request failed: ${response.status}`
+          );
+        }
 
-      setSelectedOfflineLocation(
-        null
+        try {
+          await safeJson(response);
+        } catch {
+          // Ignore empty response.
+        }
+      } else {
+        const pendingSOS =
+          getStoredJson(
+            "pendingSOSRequests",
+            []
+          );
+
+        pendingSOS.push({
+          ...payload,
+          createdAt:
+            new Date().toISOString(),
+          offline: true,
+        });
+
+        setStoredJson(
+          "pendingSOSRequests",
+          pendingSOS
+        );
+      }
+
+      alert(
+        online
+          ? "SOS request sent successfully."
+          : "SOS saved offline. It will be sent when internet connection returns."
+      );
+    } catch (error) {
+      console.error(
+        "SOS submission failed:",
+        error
       );
 
-    };
+      // Save SOS locally even if server fails.
+      const pendingSOS =
+        getStoredJson(
+          "pendingSOSRequests",
+          []
+        );
 
-  // ===================================================
+      pendingSOS.push({
+        ...payload,
+        createdAt:
+          new Date().toISOString(),
+        offline: true,
+      });
+
+      setStoredJson(
+        "pendingSOSRequests",
+        pendingSOS
+      );
+
+      alert(
+        "SOS could not reach the server. Your emergency request has been saved locally."
+      );
+    } finally {
+      setSosLoading(false);
+      setSosPressed(false);
+    }
+  };
+
+  const startSOS = () => {
+    setSosPressed(true);
+
+    sosTimerRef.current = setTimeout(() => {
+      submitSOS();
+    }, 1500);
+  };
+
+  const cancelSOS = () => {
+    if (sosTimerRef.current) {
+      clearTimeout(sosTimerRef.current);
+      sosTimerRef.current = null;
+    }
+
+    setSosPressed(false);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (sosTimerRef.current) {
+        clearTimeout(sosTimerRef.current);
+      }
+    };
+  }, []);
+
+  // ==========================================================
+  // EMERGENCY CALL
+  // ==========================================================
+
+  const callNumber = (number) => {
+    window.location.href = `tel:${number}`;
+  };
+
+  // ==========================================================
+  // LOGOUT
+  // ==========================================================
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("user");
+    localStorage.removeItem("currentUser");
+    localStorage.removeItem("loggedInUser");
+    localStorage.removeItem("userData");
+
+    sessionStorage.removeItem("token");
+    sessionStorage.removeItem("authToken");
+
+    navigate("/login");
+  };
+
+  // ==========================================================
+  // NAVIGATION
+  // ==========================================================
+
+  const goTo = (path) => {
+    setMobileMenuOpen(false);
+    navigate(path);
+  };
+
+  // ==========================================================
+  // WEATHER ICON
+  // ==========================================================
+
+  const WeatherIcon = () => {
+    const condition =
+      weather?.condition?.toLowerCase() || "";
+
+    if (
+      condition.includes("rain") ||
+      condition.includes("shower") ||
+      condition.includes("storm")
+    ) {
+      return <CloudRain size={54} />;
+    }
+
+    if (condition.includes("wind")) {
+      return <Wind size={54} />;
+    }
+
+    return <CloudRain size={54} />;
+  };
+
+  // ==========================================================
+  // ALERT ICON
+  // ==========================================================
+
+  const getAlertIcon = () => {
+    const type =
+      alert?.disasterType?.toLowerCase() ||
+      "";
+
+    if (
+      type.includes("rain") ||
+      type.includes("flood")
+    ) {
+      return <CloudRain size={34} />;
+    }
+
+    if (type.includes("fire")) {
+      return <Flame size={34} />;
+    }
+
+    if (
+      type.includes("heat") ||
+      type.includes("temperature")
+    ) {
+      return <Thermometer size={34} />;
+    }
+
+    if (
+      type.includes("storm") ||
+      type.includes("cyclone")
+    ) {
+      return <Wind size={34} />;
+    }
+
+    return <AlertTriangle size={34} />;
+  };
+
+  // ==========================================================
   // RENDER
-  // ===================================================
+  // ==========================================================
 
   return (
-    <div className="dashboard">
+    <div className="dashboard-page">
+      {/* ======================================================
+          HEADER
+      ====================================================== */}
 
       <header className="dashboard-header">
-
-        <div className="dashboard-brand">
-
-          <div className="brand-icon">
-            🚨
-          </div>
-
-          <div>
-
-            <h1>
-              Disaster Alert
-            </h1>
-
-            <span>
-              Emergency Safety Dashboard
-            </span>
-
-          </div>
-
-        </div>
-
-        <div
-          className={`connection-status ${
-            isOnline
-              ? "online"
-              : "offline"
-          }`}
-        >
-
-          <span className="status-dot"></span>
-
-          {isOnline
-            ? "Online"
-            : "Offline"}
-
-        </div>
-
-      </header>
-
-      <main className="dashboard-content">
-
-        <section className="welcome-section">
-
-          <div>
-
-            <div className="welcome-label">
-              SAFETY CENTER
-            </div>
-
-            <h2>
-              Stay Alert. Stay Safe.
-            </h2>
-
-            <p>
-              Get disaster alerts,
-              weather information,
-              your current location
-              and the safest emergency
-              locations within 2 km.
-            </p>
-
-          </div>
-
-          <div className="location-badge">
-
-            📍{" "}
-
-            {userLocation
-              ? "Location detected"
-              : "Location unavailable"}
-
-          </div>
-
+        <div className="header-left">
           <button
-            type="button"
-            onClick={enableFirebaseNotifications}
-            style={{
-              marginTop: "12px",
-              padding: "10px 16px",
-              border: "none",
-              borderRadius: "10px",
-              cursor: "pointer",
-              fontWeight: "600",
-            }}
+            className="mobile-menu-button"
+            onClick={() =>
+              setMobileMenuOpen(
+                !mobileMenuOpen
+              )
+            }
+            aria-label="Open menu"
           >
-            🔔 Enable Notifications
+            <Menu size={23} />
           </button>
 
-        </section>
-
-        {!isOnline && (
-
-          <section className="offline-alert">
-
-            <div className="offline-icon">
-              📡
+          <div
+            className="brand"
+            onClick={() => goTo("/dashboard")}
+          >
+            <div className="brand-icon">
+              <ShieldAlert size={27} />
             </div>
 
-            <div>
-
-              <strong>
-                You are currently offline
-              </strong>
-
-              <p>
-                Cached disaster,
-                weather and safe-location
-                information is being used.
-              </p>
-
-            </div>
-
-          </section>
-
-        )}
-
-        <div className="dashboard-main-grid">
-
-          <aside className="dashboard-sidebar">
-
-        {loadingAlert ? (
-
-          <section className="disaster-alert">
-
-            <div className="alert-icon">
-              ⏳
-            </div>
-
-            <div className="alert-content">
-
-              <h2>
-                Loading disaster alert...
-              </h2>
-
-            </div>
-
-          </section>
-
-        ) : alert ? (
-
-          <section className="disaster-alert">
-
-            <div className="alert-icon">
-              🚨
-            </div>
-
-            <div className="alert-content">
-
-              <div className="alert-label">
-                ACTIVE DISASTER ALERT
-              </div>
-
-              <h2>
-                {alert.title ||
-                  alert.disasterType ||
-                  "Disaster Alert"}
-              </h2>
-
-              <p>
-                {alert.message ||
-                  "Please follow safety instructions."}
-              </p>
-
-              <div className="alert-details">
-
-                {alert.disasterType && (
-
-                  <span>
-                    🌪️{" "}
-                    {alert.disasterType}
-                  </span>
-
-                )}
-
-                {alert.severity && (
-
-                  <span>
-                    ⚠️ Severity:{" "}
-                    {alert.severity}
-                  </span>
-
-                )}
-
-                {alert.location && (
-
-                  <span>
-                    📍{" "}
-                    {alert.location}
-                  </span>
-
-                )}
-
-              </div>
-
-            </div>
-
-            <div className="alert-status">
-              ACTIVE
-            </div>
-
-          </section>
-
-        ) : (
-
-          <section className="safe-alert">
-
-            <div className="safe-alert-icon">
-              ✅
-            </div>
-
-            <div>
-
-              <h3>
-                No Active Disaster Alert
-              </h3>
-
-              <p>
-                No active disaster
-                alert has been reported.
-              </p>
-
-            </div>
-
-          </section>
-
-        )}
-
-        {/* =================================================
-            SOS EMERGENCY BUTTON
-        ================================================= */}
-
-
-        <section className="sos-panel">
-          <SOSButton />
-        </section>
-
-        <section className="weather-section">
-
-          <div className="section-title">
-
-            <div>
-
-              <h2>
-                🌤️ Current Weather
-              </h2>
-
-              <p>
-                Weather conditions near
-                your location
-              </p>
-
-            </div>
-
-            {isOnline && weather && (
-
-              <span className="live-badge">
-                LIVE
-              </span>
-
-            )}
-
-          </div>
-
-          {loadingWeather ? (
-
-            <div className="weather-loading">
-              Loading weather information...
-            </div>
-
-          ) : weather ? (
-
-            <>
-
-              <div className="weather-grid">
-
-                <div className="weather-main">
-
-                  <div className="weather-icon">
-                    🌤️
-                  </div>
-
-                  <div>
-
-                    <span>
-                      Temperature
-                    </span>
-
-                    <strong>
-
-                      {temperature != null
-                        ? `${temperature}°C`
-                        : "—"}
-
-                    </strong>
-
-                    <small>
-
-                      {weatherDescription ||
-                        "Current conditions"}
-
-                    </small>
-
-                  </div>
-
-                </div>
-
-                <div className="weather-item">
-
-                  <span>
-                    💧 Humidity
-                  </span>
-
-                  <strong>
-
-                    {humidity != null
-                      ? `${humidity}%`
-                      : "—"}
-
-                  </strong>
-
-                </div>
-
-                <div className="weather-item">
-
-                  <span>
-                    💨 Wind
-                  </span>
-
-                  <strong>
-
-                    {windSpeed != null
-                      ? windSpeed
-                      : "—"}
-
-                  </strong>
-
-                </div>
-
-              </div>
-
-              <div className="weather-condition-card">
-
-                <span>
-                  Safety condition
-                </span>
-
-                <strong>
-                  {weatherCondition}
-                </strong>
-
-              </div>
-
-              {weatherLastUpdated && (
-
-                <div
-                  className="weather-last-updated"
-                  style={{
-                    marginTop: "12px",
-                    fontSize: "12px",
-                    color: "#6b7280",
-                  }}
-                >
-
-                  {isOnline
-                    ? "✓ Last updated: "
-                    : "📡 Offline • Last updated: "}
-
-                  {formatWeatherTime(
-                    weatherLastUpdated
-                  )}
-
-                </div>
-
-              )}
-
-            </>
-
-          ) : (
-
-            <div className="weather-placeholder">
-
-              <div className="weather-placeholder-icon">
-                🌤️
-              </div>
-
-              <h3>
-                Weather unavailable
-              </h3>
-
-              <p>
-
-                {isOnline
-                  ? "Weather information will appear when available."
-                  : "No previously saved weather data is available. Connect to the internet once to load weather information."}
-
-              </p>
-
-            </div>
-
-          )}
-
-        </section>
-
-        {/* =================================================
-            LOCATION
-        ================================================= */}
-
-        <section className="location-card">
-
-          <div className="location-icon">
-            📍
-          </div>
-
-          <div className="location-info">
-
-            <span>
-              YOUR CURRENT LOCATION
+            <span className="brand-name">
+              Disaster Alert
             </span>
-
-            {userLocation ? (
-
-              <p>
-
-                {Number(
-                  userLocation.latitude
-                ).toFixed(6)}
-
-                {" , "}
-
-                {Number(
-                  userLocation.longitude
-                ).toFixed(6)}
-
-              </p>
-
-            ) : (
-
-              <p>
-                Location not available
-              </p>
-
-            )}
-
           </div>
 
           <div
-            className={`location-status ${
-              userLocation
-                ? "current"
-                : "saved"
+            className={`connection-status ${
+              online ? "online" : "offline"
             }`}
           >
+            <span className="connection-dot" />
 
-            {userLocation
-              ? "Available"
-              : "Unavailable"}
-
+            {online
+              ? "Online • Live GPS"
+              : "Offline • Cached Data"}
           </div>
-
-          <button
-            type="button"
-            className="map-button"
-            onClick={getLocation}
-          >
-            📍 Update
-          </button>
-
-        </section>
-
-        {/* =================================================
-            MAIN MAP
-        ================================================= */}
-
-
-          </aside>
-
-        <section className="map-section">
-
-          <div className="section-title">
-
-            <div>
-
-              <h2>
-                🗺️ Safety Map
-              </h2>
-
-              <p>
-                Your location, safest
-                locations and emergency
-                services
-              </p>
-
-            </div>
-
-            <span className="radius-badge">
-              2 KM RADIUS
-            </span>
-
-          </div>
-
-          <div className="map-container">
-
-            <DisasterMap
-
-              key="main-safety-map"
-
-              userLocation={
-                userLocation
-              }
-
-              shelters={
-                safestLocations
-              }
-
-              safestLocations={
-                safestLocations
-              }
-
-              foodServices={
-                foodServices
-              }
-
-              policeServices={
-                policeServices
-              }
-
-              weatherCondition={
-                weatherCondition
-              }
-
-              selectedShelter={
-                selectedShelter
-              }
-
-              onShelterClick={
-                setSelectedShelter
-              }
-
-              offlineMode={false}
-
-            />
-
-          </div>
-
-        </section>
-
-
         </div>
 
-        {/* =================================================
-            SAFEST LOCATIONS
-        ================================================= */}
+        {/* Desktop navigation */}
+        <nav className="desktop-navigation">
+          <button
+            className="nav-link active"
+            onClick={() =>
+              goTo("/dashboard")
+            }
+          >
+            Home
+          </button>
 
-        <section className="safest-section">
+          <button
+            className="nav-link"
+            onClick={() =>
+              goTo("/safety-info")
+            }
+          >
+            Safety Info
+          </button>
 
-          <div className="section-title">
+          <button
+            className="nav-link"
+            onClick={() =>
+              goTo("/hazards")
+            }
+          >
+            Hazards
+          </button>
 
-            <div>
+          <button
+            className="nav-link"
+            onClick={() =>
+              goTo("/shelters")
+            }
+          >
+            Shelters
+          </button>
 
-              <div className="section-heading-row">
+          <button
+            className="nav-link"
+            onClick={() =>
+              goTo("/resources")
+            }
+          >
+            Resources
+          </button>
 
-                <h2>
-                  🛡️ Safest Locations
-                </h2>
+          <button
+            className="settings-button"
+            onClick={() =>
+              goTo("/settings")
+            }
+            aria-label="Settings"
+          >
+            <Settings size={20} />
+          </button>
+        </nav>
 
-                <span className="recommended-badge">
-                  RECOMMENDED
-                </span>
+        <div className="header-right">
+          <button
+            className={`sos-header-button ${
+              sosPressed ? "pressed" : ""
+            }`}
+            onMouseDown={startSOS}
+            onMouseUp={cancelSOS}
+            onMouseLeave={cancelSOS}
+            onTouchStart={startSOS}
+            onTouchEnd={cancelSOS}
+            disabled={sosLoading}
+            title="Hold for 1.5 seconds to send SOS"
+          >
+            <Radio size={21} />
 
-              </div>
+            <span>
+              {sosLoading
+                ? "Sending SOS..."
+                : sosPressed
+                ? "Release to Cancel"
+                : "Hold for SOS"}
+            </span>
+          </button>
 
-              <p>
+          <button
+            className="profile-button"
+            onClick={() =>
+              goTo("/profile")
+            }
+            aria-label="Profile"
+          >
+            <User size={20} />
+          </button>
+        </div>
+      </header>
 
-                {currentDisaster
-                  ? `Best locations for ${currentDisaster} within 2 km`
-                  : "Best emergency locations within 2 km"}
+      {/* ======================================================
+          MOBILE NAVIGATION
+      ====================================================== */}
 
-              </p>
+      {mobileMenuOpen && (
+        <div className="mobile-navigation">
+          <button
+            onClick={() =>
+              goTo("/dashboard")
+            }
+          >
+            <Home size={19} />
+            Home
+          </button>
 
-            </div>
+          <button
+            onClick={() =>
+              goTo("/safety-info")
+            }
+          >
+            <Shield size={19} />
+            Safety Info
+          </button>
 
+          <button
+            onClick={() =>
+              goTo("/hazards")
+            }
+          >
+            <AlertTriangle size={19} />
+            Hazards
+          </button>
+
+          <button
+            onClick={() =>
+              goTo("/shelters")
+            }
+          >
+            <Home size={19} />
+            Shelters
+          </button>
+
+          <button
+            onClick={() =>
+              goTo("/resources")
+            }
+          >
+            <Info size={19} />
+            Resources
+          </button>
+
+          <button
+            onClick={() =>
+              goTo("/settings")
+            }
+          >
+            <Settings size={19} />
+            Settings
+          </button>
+
+          <button
+            onClick={handleLogout}
+          >
+            <LogOut size={19} />
+            Logout
+          </button>
+        </div>
+      )}
+
+      <main className="dashboard-content">
+        {/* ====================================================
+            ERROR / OFFLINE MESSAGE
+        ==================================================== */}
+
+        {!online && (
+          <div className="offline-banner">
+            <CircleAlert size={18} />
+
+            <span>
+              You are offline. Showing your
+              latest available emergency data.
+            </span>
+
+            <button
+              onClick={refreshDashboard}
+            >
+              <RefreshCw size={15} />
+              Retry
+            </button>
           </div>
+        )}
 
-          <div className="safety-explanation">
+        {errorMessage && (
+          <div className="dashboard-error">
+            <CircleAlert size={18} />
 
-            <div className="safety-explanation-icon">
-              ⭐
-            </div>
+            <span>{errorMessage}</span>
 
-            <div>
-
-              <strong>
-                How are safe locations selected?
-              </strong>
-
-              <p>
-
-                {currentDisaster ===
-                "Heavy Rain"
-
-                  ? "Higher-elevation locations are prioritized because they can reduce flood exposure."
-
-                  : currentDisaster ===
-                    "Extreme Heat"
-
-                  ? "Hospitals, shelters, schools and community facilities are prioritized for heat emergencies."
-
-                  : "The nearest registered emergency locations within 2 km are recommended."}
-
-              </p>
-
-            </div>
-
+            <button
+              onClick={() =>
+                setErrorMessage("")
+              }
+            >
+              <X size={17} />
+            </button>
           </div>
+        )}
 
-          {loadingLocations ? (
+        {/* ====================================================
+            DISASTER ALERT
+        ==================================================== */}
 
-            <div className="empty-state">
-
-              <div>
-                ⏳
+        {alert &&
+          alert.active &&
+          showAlert && (
+            <section className="disaster-alert-banner">
+              <div className="alert-icon">
+                {getAlertIcon()}
               </div>
 
-              <h3>
-                Finding safest locations...
-              </h3>
-
-              <p>
-                Searching within a 2 km radius.
-              </p>
-
-            </div>
-
-          ) : safestLocations.length === 0 ? (
-
-            <div className="empty-state">
-
-              <div>
-                🛡️
-              </div>
-
-              <h3>
-                No safe locations found
-              </h3>
-
-              <p>
-                No registered emergency
-                facility was found within
-                2 km of your location.
-              </p>
-
-            </div>
-
-          ) : (
-
-            <div className="safest-grid">
-
-              {safestLocations.map(
-                (location, index) => (
-
-                  <div
-                    className={`safest-location-card ${
-                      index === 0
-                        ? "top-safe"
-                        : ""
-                    }`}
-                    key={
-                      location.id ??
-                      `${location.name}-${location.latitude}-${location.longitude}`
-                    }
-                  >
-
-                    <div className="rank-circle">
-                      {index + 1}
-                    </div>
-
-                    <div className="safe-card-icon">
-                      🛡️
-                    </div>
-
-                    <div className="safe-card-content">
-
-                      <div className="safe-card-title">
-
-                        <h3>
-                          {location.name ||
-                            "Safe Location"}
-                        </h3>
-
-                        {index === 0 && (
-
-                          <span>
-                            BEST OPTION
-                          </span>
-
-                        )}
-
-                      </div>
-
-                      <div className="location-type">
-
-                        {location.type ||
-                          "Emergency Facility"}
-
-                      </div>
-
-                      <div className="safe-metrics">
-
-                        <div>
-
-                          <span>
-                            Road Distance
-                          </span>
-
-                          <strong>
-
-                            {formatDistance(
-                              location.roadDistance ??
-                              location.distance
-                            )}
-
-                          </strong>
-
-                        </div>
-
-                        {location.capacity !=
-                          null && (
-
-                          <div>
-
-                            <span>
-                              Capacity
-                            </span>
-
-                            <strong>
-                              {location.capacity}
-                            </strong>
-
-                          </div>
-
-                        )}
-
-                        {location.elevation !=
-                          null && (
-
-                          <div>
-
-                            <span>
-                              Elevation
-                            </span>
-
-                            <strong>
-                              {location.elevation} m
-                            </strong>
-
-                          </div>
-
-                        )}
-
-                      </div>
-
-                      {location.roadDistance !=
-                        null &&
-                        location.distance !=
-                          null && (
-
-                        <div
-                          style={{
-                            marginTop: "6px",
-                            fontSize: "11px",
-                            color: "#9ca3af",
-                          }}
-                        >
-
-                          Straight-line distance:{" "}
-
-                          {formatDistance(
-                            location.distance
-                          )}
-
-                        </div>
-
-                      )}
-
-                      {currentDisaster ===
-                        "Extreme Heat" && (
-
-                        <div className="heat-score">
-
-                          ☀️ Heat Safety Score:{" "}
-
-                          <strong>
-                            {location.heatSafetyScore}
-                          </strong>
-
-                        </div>
-
-                      )}
-
-                      {location.address && (
-
-                        <p className="safe-address">
-
-                          🏠{" "}
-                          {location.address}
-
-                        </p>
-
-                      )}
-
-                      <button
-                        type="button"
-                        className="safe-route-button"
-                        onClick={() =>
-                          openOfflineMap(
-                            location
-                          )
-                        }
-                      >
-                        🗺️ View Offline Map
-                      </button>
-
-                    </div>
-
-                  </div>
-
-                )
-              )}
-
-            </div>
-
-          )}
-
-        </section>
-
-        {/* =================================================
-            SECOND MAP
-        ================================================= */}
-
-        {selectedOfflineLocation && (
-
-          <section className="offline-map-section">
-
-            <div className="section-title">
-
-              <div>
-
-                <div className="section-heading-row">
-
-                  <h2>
-                    📍 Offline Map
-                  </h2>
-
-                  <span className="offline-map-badge">
-                    ONLINE + OFFLINE
+              <div className="alert-content">
+                <div className="alert-title">
+                  <strong>
+                    {alert.title}
+                  </strong>
+
+                  <span>•</span>
+
+                  <span>
+                    {alert.location}
                   </span>
 
+                  <span>•</span>
+
+                  <span>
+                    Severity:{" "}
+                    {alert.severity}
+                  </span>
+
+                  <span>
+                    - Seek shelter immediately
+                  </span>
                 </div>
 
                 <p>
-
-                  Map for{" "}
-
-                  <strong>
-                    {
-                      selectedOfflineLocation.name
-                    }
-                  </strong>
-
+                  {alert.message}
                 </p>
-
               </div>
 
               <button
-                type="button"
-                className="close-map-button"
-                onClick={closeOfflineMap}
+                className="close-alert"
+                onClick={() =>
+                  setShowAlert(false)
+                }
+                aria-label="Close alert"
               >
-                ✕ Close Map
+                <X size={21} />
               </button>
+            </section>
+          )}
 
-            </div>
+        {/* ====================================================
+            MAIN GRID
+        ==================================================== */}
 
-            <div className="offline-map-info">
+        <section className="dashboard-main-grid">
+          {/* ==================================================
+              MAP
+          ================================================== */}
 
-              <div className="offline-location-details">
+          <div className="map-section-card">
+            <div className="map-toolbar">
+              <div className="map-switcher">
+                <button
+                  className={
+                    mapMode === "map"
+                      ? "active"
+                      : ""
+                  }
+                  onClick={() =>
+                    setMapMode("map")
+                  }
+                >
+                  Map
+                </button>
 
-                <div className="offline-location-icon">
-                  🛡️
-                </div>
-
-                <div>
-
-                  <h3>
-                    {
-                      selectedOfflineLocation.name
-                    }
-                  </h3>
-
-                  <span>
-
-                    {
-                      selectedOfflineLocation.type ||
-                      "Emergency Facility"
-                    }
-
-                  </span>
-
-                </div>
-
+                <button
+                  className={
+                    mapMode === "satellite"
+                      ? "active"
+                      : ""
+                  }
+                  onClick={() =>
+                    setMapMode(
+                      "satellite"
+                    )
+                  }
+                >
+                  Satellite
+                </button>
               </div>
 
-              <div className="offline-location-distance">
+              <div className="risk-control">
+                <label>
+                  <input
+                    type="checkbox"
+                    defaultChecked
+                  />
 
-                <span>
-                  Road Distance
-                </span>
+                  <span>
+                    Live Flood Risk
+                  </span>
+                </label>
 
-                <strong>
+                <div className="risk-row">
+                  <span className="risk-color high" />
+                  High Risk
+                </div>
 
-                  {formatDistance(
-                    selectedOfflineLocation.roadDistance ??
-                    selectedOfflineLocation.distance
-                  )}
+                <div className="risk-row">
+                  <span className="risk-color medium" />
+                  Moderate Risk
+                </div>
 
-                </strong>
-
+                <div className="risk-row">
+                  <span className="risk-color low" />
+                  Low Risk
+                </div>
               </div>
-
-              {selectedOfflineLocation.capacity !=
-                null && (
-
-                <div className="offline-location-distance">
-
-                  <span>
-                    Capacity
-                  </span>
-
-                  <strong>
-                    {
-                      selectedOfflineLocation.capacity
-                    }
-                  </strong>
-
-                </div>
-
-              )}
-
-              {selectedOfflineLocation.elevation !=
-                null && (
-
-                <div className="offline-location-distance">
-
-                  <span>
-                    Elevation
-                  </span>
-
-                  <strong>
-                    {
-                      selectedOfflineLocation.elevation
-                    }{" "}
-                    m
-                  </strong>
-
-                </div>
-
-              )}
-
             </div>
 
-            <div className="offline-map-container">
-
+            <div className="map-container">
               <DisasterMap
-
-                key={`offline-map-${
-                  selectedOfflineLocation.id ??
-                  selectedOfflineLocation.name
-                }`}
-
-                userLocation={
-                  userLocation
+                userLocation={location}
+                currentLocation={location}
+                safeLocations={
+                  sheltersWithDistance
                 }
-
-                shelters={[
-                  selectedOfflineLocation
-                ]}
-
-                safestLocations={[
-                  selectedOfflineLocation
-                ]}
-
-                foodServices={
-                  foodServices
+                shelters={
+                  sheltersWithDistance
                 }
-
-                policeServices={
-                  policeServices
-                }
-
-                weatherCondition={
-                  weatherCondition
-                }
-
                 selectedShelter={
-                  selectedOfflineLocation
+                  selectedShelter
                 }
-
-                onShelterClick={() => {}}
-
-                offlineMode={true}
-
+                onShelterSelect={
+                  setSelectedShelter
+                }
+                weather={weather}
+                alert={alert}
+                mapMode={mapMode}
+                online={online}
+                maxDistanceKm={
+                  MAX_DISTANCE_KM
+                }
               />
 
-            </div>
+              {/* Map legend */}
+              <div className="map-legend">
+                <div className="legend-item">
+                  <span className="legend-dot location" />
+                  <span>
+                    Your Location
+                  </span>
+                </div>
 
-            <div className="offline-map-notice">
+                <div className="legend-item">
+                  <span className="legend-shelter">
+                    <Home size={11} />
+                  </span>
+                  <span>
+                    Safe Shelter
+                  </span>
+                </div>
 
-              <div className="offline-notice-icon">
-                📡
+                <div className="legend-item">
+                  <span className="legend-risk" />
+                  <span>
+                    Flood Risk Zone
+                  </span>
+                </div>
+
+                <div className="legend-item">
+                  <span className="legend-road" />
+                  <span>
+                    Major Road
+                  </span>
+                </div>
+
+                <div className="map-scale">
+                  <span />
+                  <small>
+                    2 km
+                  </small>
+                </div>
               </div>
 
-              <div>
+              {/* Map controls */}
+              <div className="map-controls">
+                <button
+                  onClick={() => {
+                    window.dispatchEvent(
+                      new CustomEvent(
+                        "disaster-map-zoom-in"
+                      )
+                    );
+                  }}
+                  aria-label="Zoom in"
+                >
+                  +
+                </button>
 
-                <strong>
-                  Online + Offline Map
-                </strong>
+                <button
+                  onClick={() => {
+                    window.dispatchEvent(
+                      new CustomEvent(
+                        "disaster-map-zoom-out"
+                      )
+                    );
+                  }}
+                  aria-label="Zoom out"
+                >
+                  −
+                </button>
 
-                <p>
-
-                  When internet is available,
-                  the map uses OpenStreetMap
-                  and road routing.
-                  When internet is unavailable,
-                  previously cached map tiles
-                  and routes can be used.
-
-                </p>
-
+                <button
+                  onClick={() =>
+                    getUserLocation()
+                  }
+                  aria-label="Locate me"
+                  disabled={
+                    locationLoading
+                  }
+                >
+                  <LocateFixed
+                    size={19}
+                  />
+                </button>
               </div>
-
             </div>
-
-          </section>
-
-        )}
-
-        {/* =================================================
-            EMERGENCY RESOURCES
-        ================================================= */}
-
-        <section className="resources-section">
-
-          <div className="section-title">
-
-            <div>
-
-              <h2>
-                📞 Emergency Resources
-              </h2>
-
-              <p>
-                Important emergency contacts
-              </p>
-
-            </div>
-
           </div>
 
-          <div className="resource-grid">
+          {/* ==================================================
+              SAFE HAVENS
+          ================================================== */}
 
-            <div className="resource-card">
+          <aside className="safe-havens-card">
+            <div className="section-heading">
+              <div className="heading-title">
+                <div className="heading-icon green">
+                  <Home size={20} />
+                </div>
 
-              <div className="resource-icon">
-                🚨
+                <h2>
+                  Nearest Safe Havens
+                </h2>
               </div>
 
-              <div>
-
-                <h3>
-                  Emergency
-                </h3>
-
-                <p>
-                  National emergency number
-                </p>
-
-                <a href="tel:112">
-                  Call 112
-                </a>
-
-              </div>
-
+              <button
+                className="view-all-button"
+                onClick={() =>
+                  goTo("/shelters")
+                }
+              >
+                View All
+              </button>
             </div>
 
-            <div className="resource-card">
+            <div className="safe-havens-list">
+              {loadingShelters &&
+              nearbyShelters.length ===
+                0 ? (
+                <div className="loading-state">
+                  <RefreshCw
+                    size={22}
+                    className="spin"
+                  />
+                  <span>
+                    Finding nearby safe
+                    locations...
+                  </span>
+                </div>
+              ) : nearbyShelters.length >
+                0 ? (
+                nearbyShelters.map(
+                  (shelter) => (
+                    <article
+                      className={`shelter-card ${
+                        selectedShelter?.id ===
+                        shelter.id
+                          ? "selected"
+                          : ""
+                      }`}
+                      key={shelter.id}
+                    >
+                      <div className="shelter-image">
+                        {shelter.image ? (
+                          <img
+                            src={
+                              shelter.image
+                            }
+                            alt={
+                              shelter.name
+                            }
+                            onError={(
+                              event
+                            ) => {
+                              event.currentTarget.style.display =
+                                "none";
+                            }}
+                          />
+                        ) : (
+                          <div className="shelter-placeholder">
+                            <Home
+                              size={28}
+                            />
+                          </div>
+                        )}
+                      </div>
 
-              <div className="resource-icon">
-                🚒
-              </div>
+                      <div className="shelter-information">
+                        <h3>
+                          {shelter.name}
+                        </h3>
 
-              <div>
+                        <div className="shelter-distance">
+                          <MapPin
+                            size={14}
+                          />
 
-                <h3>
-                  Fire & Rescue
-                </h3>
+                          <span>
+                            {formatDistance(
+                              shelter.calculatedDistanceKm
+                            )}
+                          </span>
+                        </div>
 
-                <p>
-                  Fire emergency services
-                </p>
+                        <p className="shelter-address">
+                          {shelter.address}
+                        </p>
 
-                <a href="tel:101">
-                  Call 101
-                </a>
+                        <div className="shelter-bottom">
+                          <div className="shelter-tags">
+                            <span className="beds-tag">
+                              {shelter.beds ||
+                                0}{" "}
+                              beds available
+                            </span>
 
-              </div>
+                            <span className="elevation-tag">
+                              <Waves
+                                size={13}
+                              />
 
+                              {formatElevation(
+                                shelter.elevation
+                              )}
+                            </span>
+                          </div>
+
+                          <button
+                            className="direction-button"
+                            onClick={() => {
+                              setSelectedShelter(
+                                shelter
+                              );
+
+                              openDirections(
+                                shelter
+                              );
+                            }}
+                          >
+                            <Navigation
+                              size={15}
+                            />
+
+                            Get Directions
+                          </button>
+                        </div>
+                      </div>
+                    </article>
+                  )
+                )
+              ) : (
+                <div className="empty-state">
+                  <Home size={30} />
+
+                  <strong>
+                    No safe havens found
+                  </strong>
+
+                  <span>
+                    No safe location was
+                    found within{" "}
+                    {MAX_DISTANCE_KM} km.
+                  </span>
+
+                  <button
+                    onClick={() =>
+                      goTo("/shelters")
+                    }
+                  >
+                    View all shelters
+                  </button>
+                </div>
+              )}
             </div>
-
-            <div className="resource-card">
-
-              <div className="resource-icon">
-                🚑
-              </div>
-
-              <div>
-
-                <h3>
-                  Ambulance
-                </h3>
-
-                <p>
-                  Medical emergency
-                </p>
-
-                <a href="tel:108">
-                  Call 108
-                </a>
-
-              </div>
-
-            </div>
-
-            <div className="resource-card">
-
-              <div className="resource-icon">
-                👮
-              </div>
-
-              <div>
-
-                <h3>
-                  Police
-                </h3>
-
-                <p>
-                  Police emergency service
-                </p>
-
-                <a href="tel:100">
-                  Call 100
-                </a>
-
-              </div>
-
-            </div>
-
-          </div>
-
+          </aside>
         </section>
 
+        {/* ====================================================
+            BOTTOM GRID
+        ==================================================== */}
+
+        <section className="dashboard-bottom-grid">
+          {/* ==================================================
+              QUICK DIAL
+          ================================================== */}
+
+          <div className="quick-dial-section">
+            <div className="bottom-section-heading">
+              <div>
+                <Phone size={20} />
+                <h2>
+                  Emergency Quick Dial
+                </h2>
+              </div>
+            </div>
+
+            <div className="quick-dial-grid">
+              {/* 112 */}
+              <button
+                className="emergency-card red"
+                onClick={() =>
+                  callNumber(
+                    EMERGENCY_NUMBERS.emergency
+                  )
+                }
+              >
+                <div className="emergency-icon">
+                  <Phone size={28} />
+                </div>
+
+                <div className="emergency-text">
+                  <span>
+                    Emergency
+                  </span>
+
+                  <strong>112</strong>
+
+                  <small>
+                    All Emergencies
+                  </small>
+                </div>
+              </button>
+
+              {/* 101 */}
+              <button
+                className="emergency-card orange"
+                onClick={() =>
+                  callNumber(
+                    EMERGENCY_NUMBERS.fire
+                  )
+                }
+              >
+                <div className="emergency-icon">
+                  <Flame size={29} />
+                </div>
+
+                <div className="emergency-text">
+                  <span>
+                    Fire Services
+                  </span>
+
+                  <strong>101</strong>
+
+                  <small>
+                    Fire & Rescue
+                  </small>
+                </div>
+              </button>
+
+              {/* 108 */}
+              <button
+                className="emergency-card white"
+                onClick={() =>
+                  callNumber(
+                    EMERGENCY_NUMBERS.ambulance
+                  )
+                }
+              >
+                <div className="emergency-icon ambulance">
+                  <Ambulance
+                    size={28}
+                  />
+                </div>
+
+                <div className="emergency-text">
+                  <span>
+                    Ambulance
+                  </span>
+
+                  <strong>108</strong>
+
+                  <small>
+                    Medical Emergency
+                  </small>
+                </div>
+              </button>
+
+              {/* 100 */}
+              <button
+                className="emergency-card white"
+                onClick={() =>
+                  callNumber(
+                    EMERGENCY_NUMBERS.police
+                  )
+                }
+              >
+                <div className="emergency-icon police">
+                  <Shield size={28} />
+                </div>
+
+                <div className="emergency-text">
+                  <span>
+                    Police
+                  </span>
+
+                  <strong>100</strong>
+
+                  <small>
+                    Law & Order
+                  </small>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          {/* ==================================================
+              WEATHER
+          ================================================== */}
+
+          <aside className="weather-card">
+            <div className="weather-heading">
+              <div>
+                <CloudRain size={20} />
+
+                <h2>
+                  {weather?.city ||
+                    "Tirupati"}{" "}
+                  Weather
+                </h2>
+              </div>
+
+              <span>
+                {weather?.updatedAt
+                  ? `Updated ${weather.updatedAt}`
+                  : "Live data"}
+              </span>
+            </div>
+
+            {loadingWeather &&
+            !weather ? (
+              <div className="weather-loading">
+                <RefreshCw
+                  size={24}
+                  className="spin"
+                />
+
+                <span>
+                  Loading weather...
+                </span>
+              </div>
+            ) : (
+              <div className="weather-content">
+                <div className="weather-main">
+                  <div className="weather-icon">
+                    <WeatherIcon />
+                  </div>
+
+                  <div className="weather-temperature">
+                    <strong>
+                      {Math.round(
+                        numberValue(
+                          weather?.temperature,
+                          30
+                        )
+                      )}
+                      °C
+                    </strong>
+
+                    <span>
+                      {weather?.condition ||
+                        "Weather unavailable"}
+                    </span>
+
+                    {weather?.condition
+                      ?.toLowerCase()
+                      .includes(
+                        "rain"
+                      ) && (
+                      <small>
+                        High chance of
+                        flooding in
+                        low-lying areas
+                      </small>
+                    )}
+                  </div>
+                </div>
+
+                <div className="weather-details">
+                  <div className="weather-detail">
+                    <Droplets
+                      size={20}
+                    />
+
+                    <span>
+                      Humidity
+                    </span>
+
+                    <strong>
+                      {numberValue(
+                        weather?.humidity,
+                        0
+                      )}
+                      %
+                    </strong>
+                  </div>
+
+                  <div className="weather-detail">
+                    <Wind size={20} />
+
+                    <span>
+                      Wind
+                    </span>
+
+                    <strong>
+                      {numberValue(
+                        weather?.windSpeed,
+                        0
+                      )}{" "}
+                      km/h
+                    </strong>
+                  </div>
+
+                  <div className="weather-detail">
+                    <Gauge
+                      size={20}
+                    />
+
+                    <span>
+                      Visibility
+                    </span>
+
+                    <strong>
+                      {numberValue(
+                        weather?.visibility,
+                        0
+                      )}{" "}
+                      km
+                    </strong>
+                  </div>
+                </div>
+              </div>
+            )}
+          </aside>
+        </section>
+
+        {/* ====================================================
+            STATUS FOOTER
+        ==================================================== */}
+
+        <section className="dashboard-status-row">
+          <div className="status-item">
+            <CheckCircle2 size={17} />
+
+            <span>
+              Emergency services available
+            </span>
+          </div>
+
+          <div className="status-item">
+            <Navigation size={17} />
+
+            <span>
+              GPS accuracy{" "}
+              {location?.accuracy
+                ? `±${Math.round(
+                    location.accuracy
+                  )} m`
+                : "checking..."}
+            </span>
+          </div>
+
+          <div className="status-item">
+            <Shield size={17} />
+
+            <span>
+              Safe radius:{" "}
+              {MAX_DISTANCE_KM} km
+            </span>
+          </div>
+
+          <button
+            className="refresh-dashboard-button"
+            onClick={refreshDashboard}
+            disabled={refreshing}
+          >
+            <RefreshCw
+              size={16}
+              className={
+                refreshing
+                  ? "spin"
+                  : ""
+              }
+            />
+
+            {refreshing
+              ? "Refreshing..."
+              : "Refresh data"}
+          </button>
+        </section>
       </main>
-
-      <footer className="dashboard-footer">
-
-        <div className="footer-brand">
-          🛡️ Disaster Alert System
-        </div>
-
-        <p>
-          Stay Alert • Stay Safe • Stay Prepared
-        </p>
-
-        <span>
-          Emergency information system
-        </span>
-
-      </footer>
-
     </div>
   );
 }
-
-export default Dashboard;
