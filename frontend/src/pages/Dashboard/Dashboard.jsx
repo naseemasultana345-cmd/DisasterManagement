@@ -527,6 +527,15 @@ export default function Dashboard() {
   const [mobileMenuOpen, setMobileMenuOpen] =
     useState(false);
 
+  const [showProfileMenu, setShowProfileMenu] =
+    useState(false);
+
+  const [showSettingsPanel, setShowSettingsPanel] =
+    useState(false);
+
+  const [showNotificationsPanel, setShowNotificationsPanel] =
+    useState(false);
+
   const [alert, setAlert] = useState(() =>
     normalizeAlert(
       getStoredJson(ALERT_CACHE_KEY)
@@ -835,14 +844,16 @@ export default function Dashboard() {
           location?.longitude !== undefined
         ) {
           url =
-            `${API_BASE}/safe-locations/nearby` +
+            `${API_BASE}/safe-locations/safest-list` +
             `?latitude=${encodeURIComponent(
               location.latitude
             )}` +
             `&longitude=${encodeURIComponent(
               location.longitude
             )}` +
-            `&radius=${MAX_DISTANCE_KM}`;
+            `&disasterType=${encodeURIComponent(
+              alert?.disasterType || ""
+            )}`;
         }
 
         const response = await apiFetch(url);
@@ -893,6 +904,7 @@ export default function Dashboard() {
       online,
       location?.latitude,
       location?.longitude,
+      alert?.disasterType,
     ]
   );
 
@@ -1259,6 +1271,22 @@ export default function Dashboard() {
     navigate(path);
   };
 
+  const scrollToSection = (sectionId) => {
+    setMobileMenuOpen(false);
+    setShowProfileMenu(false);
+    setShowSettingsPanel(false);
+    setShowNotificationsPanel(false);
+
+    const section = document.getElementById(sectionId);
+
+    if (section) {
+      section.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }
+  };
+
   // ==========================================================
   // WEATHER ICON
   // ==========================================================
@@ -1373,7 +1401,7 @@ export default function Dashboard() {
           <button
             className="nav-link active"
             onClick={() =>
-              goTo("/dashboard")
+              scrollToSection("dashboard-home")
             }
           >
             Home
@@ -1382,16 +1410,25 @@ export default function Dashboard() {
           <button
             className="nav-link"
             onClick={() =>
-              goTo("/safety-info")
+              scrollToSection("dashboard-alerts")
             }
           >
-            Safety Info
+            Alerts
           </button>
 
           <button
             className="nav-link"
             onClick={() =>
-              goTo("/hazards")
+              scrollToSection("safe-locations")
+            }
+          >
+            Safe Locations
+          </button>
+
+          <button
+            className="nav-link"
+            onClick={() =>
+              scrollToSection("dashboard-hazards")
             }
           >
             Hazards
@@ -1400,29 +1437,21 @@ export default function Dashboard() {
           <button
             className="nav-link"
             onClick={() =>
-              goTo("/shelters")
-            }
-          >
-            Shelters
-          </button>
-
-          <button
-            className="nav-link"
-            onClick={() =>
-              goTo("/resources")
+              scrollToSection("dashboard-resources")
             }
           >
             Resources
           </button>
 
           <button
-            className="settings-button"
+            className="nav-link"
             onClick={() =>
-              goTo("/settings")
+              setShowNotificationsPanel(
+                !showNotificationsPanel
+              )
             }
-            aria-label="Settings"
           >
-            <Settings size={20} />
+            Notifications
           </button>
         </nav>
 
@@ -1450,17 +1479,227 @@ export default function Dashboard() {
             </span>
           </button>
 
-          <button
-            className="profile-button"
-            onClick={() =>
-              goTo("/profile")
-            }
-            aria-label="Profile"
-          >
-            <User size={20} />
-          </button>
+          <div className="profile-menu-wrapper">
+            <button
+              className="profile-button"
+              onClick={() => {
+                setShowProfileMenu(
+                  !showProfileMenu
+                );
+                setShowSettingsPanel(false);
+                setShowNotificationsPanel(false);
+              }}
+              aria-label="Profile"
+              aria-expanded={showProfileMenu}
+            >
+              <User size={20} />
+            </button>
+
+            {showProfileMenu && (
+              <div className="profile-dropdown">
+                <div className="profile-dropdown-header">
+                  <div className="profile-avatar">
+                    <User size={21} />
+                  </div>
+
+                  <div>
+                    <strong>
+                      {user?.name ||
+                        user?.username ||
+                        user?.fullName ||
+                        "User"}
+                    </strong>
+
+                    <span>
+                      {user?.email ||
+                        "DisasterSafe User"}
+                    </span>
+                  </div>
+                </div>
+
+                <button
+                  className="profile-menu-item"
+                  onClick={() => {
+                    setShowProfileMenu(false);
+                    setShowSettingsPanel(true);
+                  }}
+                >
+                  <Settings size={17} />
+                  Settings
+                </button>
+
+                <button
+                  className="profile-menu-item logout-item"
+                  onClick={handleLogout}
+                >
+                  <LogOut size={17} />
+                  Logout
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </header>
+
+      {showNotificationsPanel && (
+        <div className="dashboard-popover notifications-panel">
+          <div className="popover-header">
+            <div>
+              <strong>Notifications</strong>
+              <span>Latest emergency information</span>
+            </div>
+
+            <button
+              onClick={() =>
+                setShowNotificationsPanel(false)
+              }
+              aria-label="Close notifications"
+            >
+              <X size={18} />
+            </button>
+          </div>
+
+          <div className="notification-item">
+            <div className="notification-icon alert">
+              <AlertTriangle size={17} />
+            </div>
+
+            <div>
+              <strong>
+                {alert?.title ||
+                  "Disaster Alert"}
+              </strong>
+
+              <span>
+                {alert?.message ||
+                  "No active disaster alert."}
+              </span>
+            </div>
+          </div>
+
+          <div className="notification-item">
+            <div className="notification-icon weather">
+              <CloudRain size={17} />
+            </div>
+
+            <div>
+              <strong>
+                Weather Update
+              </strong>
+
+              <span>
+                {weather?.condition ||
+                  "Weather information available"}
+                {weather?.temperature !== undefined
+                  ? ` • ${Math.round(
+                      Number(weather.temperature)
+                    )}°C`
+                  : ""}
+              </span>
+            </div>
+          </div>
+
+          <button
+            className="popover-action"
+            onClick={() => {
+              setShowNotificationsPanel(false);
+              scrollToSection(
+                "dashboard-alerts"
+              );
+            }}
+          >
+            View emergency alerts
+          </button>
+        </div>
+      )}
+
+      {showSettingsPanel && (
+        <div className="dashboard-popover settings-panel">
+          <div className="popover-header">
+            <div>
+              <strong>Dashboard Settings</strong>
+              <span>
+                Manage your emergency dashboard
+              </span>
+            </div>
+
+            <button
+              onClick={() =>
+                setShowSettingsPanel(false)
+              }
+              aria-label="Close settings"
+            >
+              <X size={18} />
+            </button>
+          </div>
+
+          <label className="setting-row">
+            <div>
+              <strong>Disaster alerts</strong>
+              <span>
+                Show active emergency alerts
+              </span>
+            </div>
+
+            <input
+              type="checkbox"
+              checked={showAlert}
+              onChange={(event) =>
+                setShowAlert(
+                  event.target.checked
+                )
+              }
+            />
+          </label>
+
+          <div className="setting-row static-setting">
+            <div>
+              <strong>Location services</strong>
+              <span>
+                {location
+                  ? "GPS location available"
+                  : "Waiting for location"}
+              </span>
+            </div>
+
+            <LocateFixed size={18} />
+          </div>
+
+          <div className="setting-row static-setting">
+            <div>
+              <strong>Connection</strong>
+              <span>
+                {online
+                  ? "Live data enabled"
+                  : "Using cached data"}
+              </span>
+            </div>
+
+            <span
+              className={
+                online
+                  ? "setting-status online"
+                  : "setting-status offline"
+              }
+            >
+              {online
+                ? "Online"
+                : "Offline"}
+            </span>
+          </div>
+
+          <button
+            className="popover-action"
+            onClick={() => {
+              setShowSettingsPanel(false);
+              refreshDashboard();
+            }}
+          >
+            <RefreshCw size={16} />
+            Refresh dashboard data
+          </button>
+        </div>
+      )}
 
       {/* MOBILE NAVIGATION */}
 
@@ -1468,7 +1707,7 @@ export default function Dashboard() {
         <div className="mobile-navigation">
           <button
             onClick={() =>
-              goTo("/dashboard")
+              scrollToSection("dashboard-home")
             }
           >
             <Home size={19} />
@@ -1477,44 +1716,57 @@ export default function Dashboard() {
 
           <button
             onClick={() =>
-              goTo("/safety-info")
+              scrollToSection("dashboard-alerts")
             }
           >
-            <Shield size={19} />
-            Safety Info
+            <AlertTriangle size={19} />
+            Alerts
           </button>
 
           <button
             onClick={() =>
-              goTo("/hazards")
+              scrollToSection("safe-locations")
             }
           >
-            <AlertTriangle size={19} />
+            <MapPin size={19} />
+            Safe Locations
+          </button>
+
+          <button
+            onClick={() =>
+              scrollToSection("dashboard-hazards")
+            }
+          >
+            <CloudRain size={19} />
             Hazards
           </button>
 
           <button
             onClick={() =>
-              goTo("/shelters")
+              scrollToSection("dashboard-resources")
             }
           >
-            <Home size={19} />
-            Shelters
-          </button>
-
-          <button
-            onClick={() =>
-              goTo("/resources")
-            }
-          >
-            <Info size={19} />
+            <Phone size={19} />
             Resources
           </button>
 
           <button
-            onClick={() =>
-              goTo("/settings")
-            }
+            onClick={() => {
+              setMobileMenuOpen(false);
+              setShowNotificationsPanel(
+                !showNotificationsPanel
+              );
+            }}
+          >
+            <CircleAlert size={19} />
+            Notifications
+          </button>
+
+          <button
+            onClick={() => {
+              setMobileMenuOpen(false);
+              setShowSettingsPanel(true);
+            }}
           >
             <Settings size={19} />
             Settings
@@ -1527,7 +1779,10 @@ export default function Dashboard() {
         </div>
       )}
 
-      <main className="dashboard-content">
+      <main
+        id="dashboard-home"
+        className="dashboard-content"
+      >
         {/* OFFLINE */}
 
         {!online && (
@@ -1570,7 +1825,10 @@ export default function Dashboard() {
         {alert &&
           alert.active &&
           showAlert && (
-            <section className="disaster-alert-banner">
+            <section
+              id="dashboard-alerts"
+              className="disaster-alert-banner"
+            >
               <div className="alert-icon">
                 {getAlertIcon()}
               </div>
@@ -1616,7 +1874,10 @@ export default function Dashboard() {
 
         {/* MAIN GRID */}
 
-        <section className="dashboard-main-grid">
+        <section
+          id="safe-locations"
+          className="dashboard-main-grid"
+        >
           {/* MAP */}
 
           <div className="map-section-card">
@@ -1956,10 +2217,16 @@ export default function Dashboard() {
 
         {/* BOTTOM GRID */}
 
-        <section className="dashboard-bottom-grid">
+        <section
+          id="dashboard-hazards"
+          className="dashboard-bottom-grid"
+        >
           {/* QUICK DIAL */}
 
-          <div className="quick-dial-section">
+          <div
+            id="dashboard-resources"
+            className="quick-dial-section"
+          >
             <div className="bottom-section-heading">
               <div>
                 <Phone size={20} />
