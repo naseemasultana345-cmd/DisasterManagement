@@ -1004,29 +1004,34 @@
 ===================================================== */
 
 .map-legend {
-  background: white;
+  width: 100%;
+  box-sizing: border-box;
+
+  background: #ffffff;
 
   border: 1px solid #e5e7eb;
 
-  border-radius: 10px;
+  border-radius: 12px;
 
-  padding: 11px 14px;
+  padding: 12px 14px;
 
   margin-top: 10px;
 
   box-shadow:
     0 2px 8px
     rgba(0, 0, 0, 0.06);
+
+  overflow: hidden;
 }
 
 .legend-title {
-  font-size: 12px;
+  font-size: 13px;
 
   font-weight: 700;
 
   color: #374151;
 
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 
 .legend-items {
@@ -1034,13 +1039,15 @@
 
   align-items: center;
 
-  gap: 18px;
+  gap: 8px 18px;
 
   flex-wrap: wrap;
+
+  width: 100%;
 }
 
 .legend-item {
-  display: flex;
+  display: inline-flex;
 
   align-items: center;
 
@@ -1048,13 +1055,23 @@
 
   color: #4b5563;
 
-  font-size: 12px;
+  font-size: 13px;
+
+  line-height: 1.35;
 
   font-weight: 500;
+
+  white-space: nowrap;
 }
 
 .legend-icon {
-  font-size: 18px;
+  width: 22px;
+
+  height: 22px;
+
+  flex: 0 0 22px;
+
+  font-size: 17px;
 
   display: inline-flex;
 
@@ -1062,11 +1079,6 @@
 
   justify-content: center;
 }
-
-
-/* =====================================================
-   LEGEND ROUTE LINE
-===================================================== */
 
 .legend-route-line {
   width: 25px;
@@ -1814,8 +1826,7 @@
 
 .offline-location-info,
 .weather-service-info,
-.service-summary,
-.map-legend {
+.service-summary {
   font-size: 12px;
 }
 

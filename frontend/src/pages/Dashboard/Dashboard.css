@@ -2523,6 +2523,139 @@
   color: #2f8f5b !important;
 }
 
+/* ============================================================
+   EMERGENCY CONTACTS
+   ============================================================ */
+
+.emergency-contacts-section {
+  margin-top: 12px;
+  padding: 12px 0;
+  border-top: 1px solid #edf0f3;
+  border-bottom: 1px solid #edf0f3;
+}
+
+.emergency-contacts-header {
+  margin-bottom: 10px;
+}
+
+.emergency-contacts-header > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.emergency-contacts-header strong {
+  color: #273449;
+  font-size: 12px;
+}
+
+.emergency-contacts-header span {
+  color: #7b8592;
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.emergency-contacts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.emergency-contact-item {
+  min-height: 42px;
+  padding: 7px 9px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border: 1px solid #edf0f3;
+  border-radius: 8px;
+  background: #fafbfc;
+}
+
+.emergency-contact-info {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.emergency-contact-info strong {
+  color: #273449;
+  font-size: 11px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.emergency-contact-info span {
+  color: #7b8592;
+  font-size: 10px;
+}
+
+.emergency-contact-delete {
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 7px;
+  background: #fff0f1;
+  color: #d9232e;
+  cursor: pointer;
+}
+
+.emergency-contact-delete:hover {
+  background: #ffe1e3;
+}
+
+.emergency-contact-form {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.emergency-contact-form input {
+  width: 100%;
+  min-height: 36px;
+  padding: 0 10px;
+  border: 1px solid #e2e6eb;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #273449;
+  font-size: 11px;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.emergency-contact-form input:focus {
+  border-color: #2f8f5b;
+  box-shadow: 0 0 0 2px rgba(47, 143, 91, 0.08);
+}
+
+.emergency-contact-form input::placeholder {
+  color: #9aa3ae;
+}
+
+.emergency-contact-add {
+  width: 100%;
+  min-height: 36px;
+  border: none;
+  border-radius: 8px;
+  background: #2f8f5b;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.emergency-contact-add:hover {
+  background: #26784b;
+}
+
 .setting-status.offline {
   color: #c87832 !important;
 }

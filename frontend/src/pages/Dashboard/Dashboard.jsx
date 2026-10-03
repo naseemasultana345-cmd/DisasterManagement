@@ -22,6 +22,7 @@ import {
   Flame,
   Gauge,
   Home,
+  Hospital,
   Info,
   LocateFixed,
   LogOut,
@@ -299,7 +300,7 @@ const normalizeWeather = (data) => {
         source.tempC,
         source.temperatureC
       ),
-      30
+      null
     ),
 
     condition:
@@ -308,14 +309,14 @@ const normalizeWeather = (data) => {
         source.description,
         source.weatherDescription,
         source.weather
-      ) || "Weather information unavailable",
+      ) || null,
 
     humidity: numberValue(
       firstDefined(
         source.humidity,
         source.humidityPercent
       ),
-      0
+      null
     ),
 
     windSpeed: numberValue(
@@ -325,7 +326,7 @@ const normalizeWeather = (data) => {
         source.windKph,
         source.windSpeedKph
       ),
-      0
+      null
     ),
 
     visibility: numberValue(
@@ -333,7 +334,7 @@ const normalizeWeather = (data) => {
         source.visibility,
         source.visibilityKm
       ),
-      0
+      null
     ),
 
     icon:
@@ -349,6 +350,33 @@ const normalizeWeather = (data) => {
         source.time
       ) || null,
   };
+};
+
+const formatDisasterType = (value) => {
+  const normalized = String(value || "")
+    .trim()
+    .toUpperCase()
+    .replace(/\s+/g, "_");
+
+  if (
+    normalized === "HEAVY_RAIN" ||
+    normalized === "HEAVYRAIN"
+  ) {
+    return "Heavy Rain";
+  }
+
+  if (
+    normalized === "EXTREME_HEAT" ||
+    normalized === "EXTREMEHEAT"
+  ) {
+    return "Extreme Heat";
+  }
+
+  if (normalized === "THUNDERSTORM") {
+    return "Thunderstorm";
+  }
+
+  return null;
 };
 
 const normalizeAlert = (data) => {
@@ -582,6 +610,17 @@ export default function Dashboard() {
 
   const [showAlert, setShowAlert] =
     useState(true);
+
+  const [emergencyContacts, setEmergencyContacts] =
+    useState(() =>
+      getStoredJson("emergencyContacts", [])
+    );
+
+  const [contactName, setContactName] =
+    useState("");
+
+  const [contactPhone, setContactPhone] =
+    useState("");
 
   const [mapMode, setMapMode] =
     useState("map");
@@ -1245,6 +1284,50 @@ export default function Dashboard() {
   };
 
   // ==========================================================
+  // EMERGENCY CONTACTS
+  // ==========================================================
+
+  const saveEmergencyContacts = (contacts) => {
+    setEmergencyContacts(contacts);
+    setStoredJson(
+      "emergencyContacts",
+      contacts
+    );
+  };
+
+  const addEmergencyContact = (name, phone) => {
+    const trimmedName = name.trim();
+    const trimmedPhone = phone.trim();
+
+    if (!trimmedName || !trimmedPhone) {
+      return false;
+    }
+
+    const contact = {
+      id: Date.now(),
+      name: trimmedName,
+      phone: trimmedPhone,
+    };
+
+    saveEmergencyContacts([
+      ...emergencyContacts,
+      contact,
+    ]);
+
+    return true;
+  };
+
+  const deleteEmergencyContact = (contactId) => {
+    const updatedContacts =
+      emergencyContacts.filter(
+        (contact) =>
+          contact.id !== contactId
+      );
+
+    saveEmergencyContacts(updatedContacts);
+  };
+
+  // ==========================================================
   // LOGOUT
   // ==========================================================
 
@@ -1688,6 +1771,99 @@ export default function Dashboard() {
             </span>
           </div>
 
+          <div className="emergency-contacts-section">
+            <div className="emergency-contacts-header">
+              <div>
+                <strong>Emergency Contacts</strong>
+                <span>
+                  Contacts who can receive your SOS message
+                </span>
+              </div>
+            </div>
+
+            {emergencyContacts.length > 0 && (
+              <div className="emergency-contacts-list">
+                {emergencyContacts.map((contact) => (
+                  <div
+                    className="emergency-contact-item"
+                    key={contact.id}
+                  >
+                    <div className="emergency-contact-info">
+                      <strong>{contact.name}</strong>
+                      <span>{contact.phone}</span>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="emergency-contact-delete"
+                      onClick={() =>
+                        deleteEmergencyContact(
+                          contact.id
+                        )
+                      }
+                      aria-label={`Delete ${contact.name}`}
+                      title="Delete contact"
+                    >
+                      <X size={15} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="emergency-contact-form">
+              <input
+                type="text"
+                placeholder="Contact name"
+                value={contactName}
+                onChange={(event) =>
+                  setContactName(event.target.value)
+                }
+              />
+
+              <input
+                type="tel"
+                placeholder="10-digit phone number"
+                value={contactPhone}
+                onChange={(event) =>
+                  setContactPhone(
+                    event.target.value
+                      .replace(/\D/g, "")
+                      .slice(0, 10)
+                  )
+                }
+                inputMode="numeric"
+                maxLength={10}
+              />
+
+              <button
+                type="button"
+                className="emergency-contact-add"
+                onClick={() => {
+                  if (contactPhone.length !== 10) {
+                    window.alert(
+                      "Please enter a valid 10-digit phone number."
+                    );
+                    return;
+                  }
+
+                  const added =
+                    addEmergencyContact(
+                      contactName,
+                      contactPhone
+                    );
+
+                  if (added) {
+                    setContactName("");
+                    setContactPhone("");
+                  }
+                }}
+              >
+                Add contact
+              </button>
+            </div>
+          </div>
+
           <button
             className="popover-action"
             onClick={() => {
@@ -1957,6 +2133,11 @@ export default function Dashboard() {
                 }
                 weather={weather}
                 alert={alert}
+                weatherCondition={
+                  formatDisasterType(alert?.disasterType) ||
+                  weather?.condition ||
+                  null
+                }
                 mapMode={mapMode}
                 online={online}
                 maxDistanceKm={
@@ -2118,9 +2299,20 @@ export default function Dashboard() {
                           />
                         ) : (
                           <div className="shelter-placeholder">
-                            <Home
-                              size={28}
-                            />
+                            {String(
+                              shelter.type || ""
+                            )
+                              .trim()
+                              .toLowerCase() ===
+                            "hospital" ? (
+                              <Hospital
+                                size={28}
+                              />
+                            ) : (
+                              <Home
+                                size={28}
+                              />
+                            )}
                           </div>
                         )}
                       </div>
@@ -2376,13 +2568,15 @@ export default function Dashboard() {
 
                   <div className="weather-temperature">
                     <strong>
-                      {Math.round(
-                        numberValue(
-                          weather?.temperature,
-                          30
-                        )
-                      )}
-                      °C
+                      {weather?.temperature !== null &&
+                      weather?.temperature !== undefined &&
+                      Number.isFinite(
+                        Number(weather.temperature)
+                      )
+                        ? `${Math.round(
+                            Number(weather.temperature)
+                          )}°C`
+                        : "—"}
                     </strong>
 
                     <span>
@@ -2413,11 +2607,15 @@ export default function Dashboard() {
                     </span>
 
                     <strong>
-                      {numberValue(
-                        weather?.humidity,
-                        0
-                      )}
-                      %
+                      {weather?.humidity !== null &&
+                      weather?.humidity !== undefined &&
+                      Number.isFinite(
+                        Number(weather.humidity)
+                      )
+                        ? `${Math.round(
+                            Number(weather.humidity)
+                          )}%`
+                        : "—"}
                     </strong>
                   </div>
 
@@ -2427,11 +2625,15 @@ export default function Dashboard() {
                     <span>Wind</span>
 
                     <strong>
-                      {numberValue(
-                        weather?.windSpeed,
-                        0
-                      )}{" "}
-                      km/h
+                      {weather?.windSpeed !== null &&
+                      weather?.windSpeed !== undefined &&
+                      Number.isFinite(
+                        Number(weather.windSpeed)
+                      )
+                        ? `${Number(
+                            weather.windSpeed
+                          ).toFixed(1)} km/h`
+                        : "—"}
                     </strong>
                   </div>
 
@@ -2443,11 +2645,15 @@ export default function Dashboard() {
                     </span>
 
                     <strong>
-                      {numberValue(
-                        weather?.visibility,
-                        0
-                      )}{" "}
-                      km
+                      {weather?.visibility !== null &&
+                      weather?.visibility !== undefined &&
+                      Number.isFinite(
+                        Number(weather.visibility)
+                      )
+                        ? `${Number(
+                            weather.visibility
+                          ).toFixed(1)} km`
+                        : "—"}
                     </strong>
                   </div>
                 </div>
@@ -2472,11 +2678,23 @@ export default function Dashboard() {
 
             <span>
               GPS accuracy{" "}
-              {location?.accuracy
-                ? `±${Math.round(
-                    location.accuracy
-                  )} m`
-                : "checking..."}
+              {(() => {
+                const accuracy = Number(
+                  location?.accuracy
+                );
+
+                if (
+                  !Number.isFinite(accuracy) ||
+                  accuracy <= 0 ||
+                  accuracy > 50000
+                ) {
+                  return "Accuracy unavailable";
+                }
+
+                return `±${Math.round(
+                  accuracy
+                )} m`;
+              })()}
             </span>
           </div>
 

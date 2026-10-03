@@ -1251,7 +1251,7 @@ function DisasterMap({
 
   policeServices = [],
 
-  weatherCondition = "Normal",
+  weatherCondition = null,
 
   selectedShelter,
 
@@ -1803,6 +1803,17 @@ function DisasterMap({
       )
     );
 
+  const validHospitalLocations =
+    nearbyShelters.filter(
+      (location) =>
+        String(
+          location?.type || ""
+        )
+          .trim()
+          .toLowerCase() ===
+        "hospital"
+    );
+
   // ===================================================
   // FOOD SERVICES WITHIN 2 KM
   // ===================================================
@@ -1837,25 +1848,21 @@ function DisasterMap({
   // SERVICE VISIBILITY
   // ===================================================
 
+  const hasWeatherCondition =
+    typeof weatherCondition === "string" &&
+    weatherCondition.trim().length > 0;
+
   const showFoodServices =
-    weatherCondition ===
-      "Heavy Rain" ||
-    weatherCondition ===
-      "Extreme Heat" ||
-    weatherCondition ===
-      "Thunderstorm" ||
-    weatherCondition ===
-      "Normal";
+    !hasWeatherCondition ||
+    weatherCondition === "Heavy Rain" ||
+    weatherCondition === "Extreme Heat" ||
+    weatherCondition === "Thunderstorm";
 
   const showPoliceServices =
-    weatherCondition ===
-      "Heavy Rain" ||
-    weatherCondition ===
-      "Extreme Heat" ||
-    weatherCondition ===
-      "Thunderstorm" ||
-    weatherCondition ===
-      "Normal";
+    !hasWeatherCondition ||
+    weatherCondition === "Heavy Rain" ||
+    weatherCondition === "Extreme Heat" ||
+    weatherCondition === "Thunderstorm";
 
   // ===================================================
   // CHECK SELECTED LOCATION
@@ -2634,7 +2641,8 @@ function DisasterMap({
           </strong>
 
           <span>
-            {weatherCondition}
+            {weatherCondition ||
+              "Weather unavailable"}
           </span>
 
         </div>
@@ -3596,89 +3604,74 @@ function DisasterMap({
         <div className="legend-items">
 
           <div className="legend-item">
-
             <span className="legend-icon">
               📍
             </span>
-
             <span>
               Your Location
             </span>
-
           </div>
 
           <div className="legend-item">
-
             <span className="legend-icon">
               🛡️
             </span>
-
             <span>
               Safest Location
             </span>
-
           </div>
 
           <div className="legend-item">
-
             <span className="legend-icon">
               🏠
             </span>
-
             <span>
               Safe Location
             </span>
-
           </div>
 
-          {showFoodServices &&
-            validFoodServices.length >
-              0 && (
-
+          {validHospitalLocations.length > 0 && (
             <div className="legend-item">
+              <span className="legend-icon">
+                🏥
+              </span>
+              <span>
+                Hospital
+              </span>
+            </div>
+          )}
 
+          {showFoodServices &&
+            validFoodServices.length > 0 && (
+            <div className="legend-item">
               <span className="legend-icon">
                 🍱
               </span>
-
               <span>
                 Food Service
               </span>
-
             </div>
-
           )}
 
           {showPoliceServices &&
-            validPoliceServices.length >
-              0 && (
-
+            validPoliceServices.length > 0 && (
             <div className="legend-item">
-
               <span className="legend-icon">
                 👮
               </span>
-
               <span>
                 Police Service
               </span>
-
             </div>
-
           )}
 
           {route.length >= 2 && (
-
             <div className="legend-item">
-
               <span className="legend-route-line"></span>
-
               <span>
                 Road Route
               </span>
-
             </div>
-
           )}
 
         </div>
