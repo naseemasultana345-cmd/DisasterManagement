@@ -280,9 +280,19 @@ const normalizeWeather = (data) => {
 
   const source =
     data.data ||
-    data.weather ||
     data.result ||
     data;
+
+  const weatherItem =
+    Array.isArray(source.weather)
+      ? source.weather[0]
+      : null;
+
+  const main =
+    source.main || {};
+
+  const wind =
+    source.wind || {};
 
   return {
     city:
@@ -298,7 +308,8 @@ const normalizeWeather = (data) => {
         source.temperature,
         source.temp,
         source.tempC,
-        source.temperatureC
+        source.temperatureC,
+        main.temp
       ),
       null
     ),
@@ -308,13 +319,14 @@ const normalizeWeather = (data) => {
         source.condition,
         source.description,
         source.weatherDescription,
-        source.weather
+        weatherItem?.description
       ) || null,
 
     humidity: numberValue(
       firstDefined(
         source.humidity,
-        source.humidityPercent
+        source.humidityPercent,
+        main.humidity
       ),
       null
     ),
@@ -324,7 +336,8 @@ const normalizeWeather = (data) => {
         source.windSpeed,
         source.wind,
         source.windKph,
-        source.windSpeedKph
+        source.windSpeedKph,
+        wind.speed
       ),
       null
     ),
@@ -332,7 +345,8 @@ const normalizeWeather = (data) => {
     visibility: numberValue(
       firstDefined(
         source.visibility,
-        source.visibilityKm
+        source.visibilityKm,
+        source.visibilityMeters
       ),
       null
     ),
@@ -340,14 +354,16 @@ const normalizeWeather = (data) => {
     icon:
       firstDefined(
         source.icon,
-        source.weatherIcon
+        source.weatherIcon,
+        weatherItem?.icon
       ) || null,
 
     updatedAt:
       firstDefined(
         source.updatedAt,
         source.lastUpdated,
-        source.time
+        source.time,
+        source.dt
       ) || null,
   };
 };
@@ -1163,9 +1179,65 @@ export default function Dashboard() {
 
     setSosLoading(true);
 
+    const now = new Date();
+
+    const userName =
+      user?.name ||
+      user?.username ||
+      user?.fullName ||
+      "User";
+
+    const latitude =
+      location?.latitude ?? null;
+
+    const longitude =
+      location?.longitude ?? null;
+
+    const emergencyType =
+      "GENERAL EMERGENCY";
+
+    const timeText =
+      now.toLocaleString();
+
+    let googleMapsLink =
+      "Location unavailable";
+
+    let locationText =
+      "Location unavailable";
+
+    if (
+      latitude !== null &&
+      longitude !== null
+    ) {
+      locationText =
+        `${latitude}, ${longitude}`;
+
+      googleMapsLink =
+        `https://www.google.com/maps?q=${latitude},${longitude}`;
+    }
+
+    const smsMessage =
+      "SOS EMERGENCY\\n\\n" +
+      "Name: " +
+      userName +
+      "\\n" +
+      "Emergency: " +
+      emergencyType +
+      "\\n" +
+      "Time: " +
+      timeText +
+      "\\n" +
+      "Location: " +
+      locationText +
+      "\\n" +
+      "Google Maps: " +
+      googleMapsLink +
+      "\\n\\n" +
+      "Please contact me immediately. This is an emergency.";
+
     const payload = {
-      latitude: location?.latitude ?? null,
-      longitude: location?.longitude ?? null,
+      latitude,
+      longitude,
       emergencyType: "GENERAL",
       status: "PENDING",
       assignedService: "EMERGENCY",
@@ -1202,7 +1274,7 @@ export default function Dashboard() {
         pendingSOS.push({
           ...payload,
           createdAt:
-            new Date().toISOString(),
+            now.toISOString(),
           offline: true,
         });
 
@@ -1212,11 +1284,30 @@ export default function Dashboard() {
         );
       }
 
-      window.alert(
-        online
-          ? "SOS request sent successfully."
-          : "SOS saved offline. It will be sent when internet connection returns."
-      );
+      const firstEmergencyContact =
+        emergencyContacts?.[0];
+
+      if (
+        firstEmergencyContact &&
+        firstEmergencyContact.phone
+      ) {
+        const smsUrl =
+          "sms:" +
+          firstEmergencyContact.phone +
+          "?body=" +
+          encodeURIComponent(
+            smsMessage
+          );
+
+        window.location.href =
+          smsUrl;
+      } else {
+        window.alert(
+          online
+            ? "SOS request sent successfully, but no emergency contact is saved."
+            : "SOS saved offline, but no emergency contact is saved."
+        );
+      }
     } catch (error) {
       console.error(
         "SOS submission failed:",
@@ -1232,7 +1323,7 @@ export default function Dashboard() {
       pendingSOS.push({
         ...payload,
         createdAt:
-          new Date().toISOString(),
+          now.toISOString(),
         offline: true,
       });
 
@@ -1241,9 +1332,28 @@ export default function Dashboard() {
         pendingSOS
       );
 
-      window.alert(
-        "SOS could not reach the server. Your emergency request has been saved locally."
-      );
+      const firstEmergencyContact =
+        emergencyContacts?.[0];
+
+      if (
+        firstEmergencyContact &&
+        firstEmergencyContact.phone
+      ) {
+        const smsUrl =
+          "sms:" +
+          firstEmergencyContact.phone +
+          "?body=" +
+          encodeURIComponent(
+            smsMessage
+          );
+
+        window.location.href =
+          smsUrl;
+      } else {
+        window.alert(
+          "SOS could not reach the server. Your emergency request has been saved locally, but no emergency contact is saved."
+        );
+      }
     } finally {
       setSosLoading(false);
       setSosPressed(false);
