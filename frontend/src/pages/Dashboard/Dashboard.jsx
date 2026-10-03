@@ -1,7 +1,7 @@
 // ============================================================
 // Dashboard.jsx
 // Disaster Management / DisasterSafe
-// Updated dashboard UI based on the provided reference design
+// Emergency dashboard reference-style UI
 // ============================================================
 
 import React, {
@@ -15,17 +15,12 @@ import React, {
 import {
   AlertTriangle,
   Ambulance,
-  Bell,
   CheckCircle2,
-  ChevronRight,
   CircleAlert,
   CloudRain,
-  Compass,
   Droplets,
-  ExternalLink,
   Flame,
   Gauge,
-  Globe2,
   Home,
   Info,
   LocateFixed,
@@ -36,18 +31,14 @@ import {
   Phone,
   Radio,
   RefreshCw,
-  Search,
   Settings,
   Shield,
   ShieldAlert,
-  Siren,
   Thermometer,
   User,
-  Users,
-  Waves,
   Wind,
+  Waves,
   X,
-  Zap,
 } from "lucide-react";
 
 import { useNavigate } from "react-router-dom";
@@ -201,6 +192,14 @@ const numberValue = (value, fallback = 0) => {
 };
 
 const formatDistance = (distance) => {
+  if (
+    distance === null ||
+    distance === undefined ||
+    !Number.isFinite(Number(distance))
+  ) {
+    return "Distance unavailable";
+  }
+
   const km = numberValue(distance, 0);
 
   if (km < 1) {
@@ -264,7 +263,11 @@ const calculateDistanceKm = (
       Math.sin(dLon / 2) ** 2;
 
   const c =
-    2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    2 *
+    Math.atan2(
+      Math.sqrt(a),
+      Math.sqrt(1 - a)
+    );
 
   return earthRadius * c;
 };
@@ -400,7 +403,8 @@ const normalizeAlert = (data) => {
         source.message,
         source.description,
         source.details
-      ) || "Please stay alert and follow safety instructions.",
+      ) ||
+      "Please stay alert and follow safety instructions.",
 
     active:
       source.active !== undefined
@@ -511,10 +515,6 @@ const normalizeShelter = (item, index = 0) => {
 
 export default function Dashboard() {
   const navigate = useNavigate();
-
-  // ==========================================================
-  // STATE
-  // ==========================================================
 
   const [user, setUser] = useState(() =>
     getCurrentUser()
@@ -634,7 +634,7 @@ export default function Dashboard() {
   }, []);
 
   // ==========================================================
-  // GET USER LOCATION
+  // USER LOCATION
   // ==========================================================
 
   const getUserLocation = useCallback(
@@ -671,7 +671,6 @@ export default function Dashboard() {
           setLocationLoading(false);
           setErrorMessage("");
         },
-
         () => {
           setLocationLoading(false);
 
@@ -681,7 +680,6 @@ export default function Dashboard() {
             );
           }
         },
-
         {
           enableHighAccuracy: true,
           timeout: 15000,
@@ -722,9 +720,7 @@ export default function Dashboard() {
         }
 
         const data = await safeJson(response);
-
-        const normalized =
-          normalizeAlert(data);
+        const normalized = normalizeAlert(data);
 
         if (normalized) {
           setAlert(normalized);
@@ -767,7 +763,10 @@ export default function Dashboard() {
       try {
         let url = `${API_BASE}/weather`;
 
-        if (location?.latitude && location?.longitude) {
+        if (
+          location?.latitude !== undefined &&
+          location?.longitude !== undefined
+        ) {
           url +=
             `?lat=${encodeURIComponent(
               location.latitude
@@ -786,9 +785,7 @@ export default function Dashboard() {
         }
 
         const data = await safeJson(response);
-
-        const normalized =
-          normalizeWeather(data);
+        const normalized = normalizeWeather(data);
 
         if (normalized) {
           setWeather(normalized);
@@ -952,7 +949,7 @@ export default function Dashboard() {
   }, [getUserLocation]);
 
   // ==========================================================
-  // CALCULATE SHELTER DISTANCES
+  // SHELTER DISTANCES
   // ==========================================================
 
   const sheltersWithDistance = useMemo(() => {
@@ -999,10 +996,6 @@ export default function Dashboard() {
         return distanceA - distanceB;
       });
   }, [shelters, location]);
-
-  // ==========================================================
-  // DISPLAY ONLY SAFE LOCATIONS WITHIN 2 KM
-  // ==========================================================
 
   const nearbyShelters = useMemo(() => {
     const available =
@@ -1072,9 +1065,7 @@ export default function Dashboard() {
       if (shelter.address) {
         const url =
           `https://www.google.com/maps/search/?api=1&query=` +
-          encodeURIComponent(
-            shelter.address
-          );
+          encodeURIComponent(shelter.address);
 
         window.open(
           url,
@@ -1087,7 +1078,7 @@ export default function Dashboard() {
   );
 
   // ==========================================================
-  // REFRESH ALL
+  // REFRESH
   // ==========================================================
 
   const refreshDashboard = async () => {
@@ -1118,18 +1109,11 @@ export default function Dashboard() {
     setSosLoading(true);
 
     const payload = {
-      latitude:
-        location?.latitude ?? null,
-
-      longitude:
-        location?.longitude ?? null,
-
+      latitude: location?.latitude ?? null,
+      longitude: location?.longitude ?? null,
       emergencyType: "GENERAL",
-
       status: "PENDING",
-
       assignedService: "EMERGENCY",
-
       userId:
         user?.id ??
         user?.userId ??
@@ -1152,11 +1136,7 @@ export default function Dashboard() {
           );
         }
 
-        try {
-          await safeJson(response);
-        } catch {
-          // Ignore empty response.
-        }
+        await safeJson(response);
       } else {
         const pendingSOS =
           getStoredJson(
@@ -1177,7 +1157,7 @@ export default function Dashboard() {
         );
       }
 
-      alert(
+      window.alert(
         online
           ? "SOS request sent successfully."
           : "SOS saved offline. It will be sent when internet connection returns."
@@ -1188,7 +1168,6 @@ export default function Dashboard() {
         error
       );
 
-      // Save SOS locally even if server fails.
       const pendingSOS =
         getStoredJson(
           "pendingSOSRequests",
@@ -1207,7 +1186,7 @@ export default function Dashboard() {
         pendingSOS
       );
 
-      alert(
+      window.alert(
         "SOS could not reach the server. Your emergency request has been saved locally."
       );
     } finally {
@@ -1217,6 +1196,10 @@ export default function Dashboard() {
   };
 
   const startSOS = () => {
+    if (sosLoading) {
+      return;
+    }
+
     setSosPressed(true);
 
     sosTimerRef.current = setTimeout(() => {
@@ -1342,9 +1325,7 @@ export default function Dashboard() {
 
   return (
     <div className="dashboard-page">
-      {/* ======================================================
-          HEADER
-      ====================================================== */}
+      {/* HEADER */}
 
       <header className="dashboard-header">
         <div className="header-left">
@@ -1362,7 +1343,9 @@ export default function Dashboard() {
 
           <div
             className="brand"
-            onClick={() => goTo("/dashboard")}
+            onClick={() =>
+              goTo("/dashboard")
+            }
           >
             <div className="brand-icon">
               <ShieldAlert size={27} />
@@ -1386,7 +1369,6 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Desktop navigation */}
         <nav className="desktop-navigation">
           <button
             className="nav-link active"
@@ -1480,9 +1462,7 @@ export default function Dashboard() {
         </div>
       </header>
 
-      {/* ======================================================
-          MOBILE NAVIGATION
-      ====================================================== */}
+      {/* MOBILE NAVIGATION */}
 
       {mobileMenuOpen && (
         <div className="mobile-navigation">
@@ -1540,9 +1520,7 @@ export default function Dashboard() {
             Settings
           </button>
 
-          <button
-            onClick={handleLogout}
-          >
+          <button onClick={handleLogout}>
             <LogOut size={19} />
             Logout
           </button>
@@ -1550,9 +1528,7 @@ export default function Dashboard() {
       )}
 
       <main className="dashboard-content">
-        {/* ====================================================
-            ERROR / OFFLINE MESSAGE
-        ==================================================== */}
+        {/* OFFLINE */}
 
         {!online && (
           <div className="offline-banner">
@@ -1582,15 +1558,14 @@ export default function Dashboard() {
               onClick={() =>
                 setErrorMessage("")
               }
+              aria-label="Close error"
             >
               <X size={17} />
             </button>
           </div>
         )}
 
-        {/* ====================================================
-            DISASTER ALERT
-        ==================================================== */}
+        {/* DISASTER ALERT */}
 
         {alert &&
           alert.active &&
@@ -1624,9 +1599,7 @@ export default function Dashboard() {
                   </span>
                 </div>
 
-                <p>
-                  {alert.message}
-                </p>
+                <p>{alert.message}</p>
               </div>
 
               <button
@@ -1641,14 +1614,10 @@ export default function Dashboard() {
             </section>
           )}
 
-        {/* ====================================================
-            MAIN GRID
-        ==================================================== */}
+        {/* MAIN GRID */}
 
         <section className="dashboard-main-grid">
-          {/* ==================================================
-              MAP
-          ================================================== */}
+          {/* MAP */}
 
           <div className="map-section-card">
             <div className="map-toolbar">
@@ -1673,9 +1642,7 @@ export default function Dashboard() {
                       : ""
                   }
                   onClick={() =>
-                    setMapMode(
-                      "satellite"
-                    )
+                    setMapMode("satellite")
                   }
                 >
                   Satellite
@@ -1736,7 +1703,6 @@ export default function Dashboard() {
                 }
               />
 
-              {/* Map legend */}
               <div className="map-legend">
                 <div className="legend-item">
                   <span className="legend-dot location" />
@@ -1749,6 +1715,7 @@ export default function Dashboard() {
                   <span className="legend-shelter">
                     <Home size={11} />
                   </span>
+
                   <span>
                     Safe Shelter
                   </span>
@@ -1756,6 +1723,7 @@ export default function Dashboard() {
 
                 <div className="legend-item">
                   <span className="legend-risk" />
+
                   <span>
                     Flood Risk Zone
                   </span>
@@ -1763,6 +1731,7 @@ export default function Dashboard() {
 
                 <div className="legend-item">
                   <span className="legend-road" />
+
                   <span>
                     Major Road
                   </span>
@@ -1770,13 +1739,10 @@ export default function Dashboard() {
 
                 <div className="map-scale">
                   <span />
-                  <small>
-                    2 km
-                  </small>
+                  <small>2 km</small>
                 </div>
               </div>
 
-              {/* Map controls */}
               <div className="map-controls">
                 <button
                   onClick={() => {
@@ -1821,9 +1787,7 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* ==================================================
-              SAFE HAVENS
-          ================================================== */}
+          {/* SAFE HAVENS */}
 
           <aside className="safe-havens-card">
             <div className="section-heading">
@@ -1856,6 +1820,7 @@ export default function Dashboard() {
                     size={22}
                     className="spin"
                   />
+
                   <span>
                     Finding nearby safe
                     locations...
@@ -1989,19 +1954,16 @@ export default function Dashboard() {
           </aside>
         </section>
 
-        {/* ====================================================
-            BOTTOM GRID
-        ==================================================== */}
+        {/* BOTTOM GRID */}
 
         <section className="dashboard-bottom-grid">
-          {/* ==================================================
-              QUICK DIAL
-          ================================================== */}
+          {/* QUICK DIAL */}
 
           <div className="quick-dial-section">
             <div className="bottom-section-heading">
               <div>
                 <Phone size={20} />
+
                 <h2>
                   Emergency Quick Dial
                 </h2>
@@ -2009,7 +1971,6 @@ export default function Dashboard() {
             </div>
 
             <div className="quick-dial-grid">
-              {/* 112 */}
               <button
                 className="emergency-card red"
                 onClick={() =>
@@ -2023,9 +1984,7 @@ export default function Dashboard() {
                 </div>
 
                 <div className="emergency-text">
-                  <span>
-                    Emergency
-                  </span>
+                  <span>Emergency</span>
 
                   <strong>112</strong>
 
@@ -2035,7 +1994,6 @@ export default function Dashboard() {
                 </div>
               </button>
 
-              {/* 101 */}
               <button
                 className="emergency-card orange"
                 onClick={() =>
@@ -2061,7 +2019,6 @@ export default function Dashboard() {
                 </div>
               </button>
 
-              {/* 108 */}
               <button
                 className="emergency-card white"
                 onClick={() =>
@@ -2071,15 +2028,11 @@ export default function Dashboard() {
                 }
               >
                 <div className="emergency-icon ambulance">
-                  <Ambulance
-                    size={28}
-                  />
+                  <Ambulance size={28} />
                 </div>
 
                 <div className="emergency-text">
-                  <span>
-                    Ambulance
-                  </span>
+                  <span>Ambulance</span>
 
                   <strong>108</strong>
 
@@ -2089,7 +2042,6 @@ export default function Dashboard() {
                 </div>
               </button>
 
-              {/* 100 */}
               <button
                 className="emergency-card white"
                 onClick={() =>
@@ -2103,9 +2055,7 @@ export default function Dashboard() {
                 </div>
 
                 <div className="emergency-text">
-                  <span>
-                    Police
-                  </span>
+                  <span>Police</span>
 
                   <strong>100</strong>
 
@@ -2117,9 +2067,7 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* ==================================================
-              WEATHER
-          ================================================== */}
+          {/* WEATHER */}
 
           <aside className="weather-card">
             <div className="weather-heading">
@@ -2177,9 +2125,7 @@ export default function Dashboard() {
 
                     {weather?.condition
                       ?.toLowerCase()
-                      .includes(
-                        "rain"
-                      ) && (
+                      .includes("rain") && (
                       <small>
                         High chance of
                         flooding in
@@ -2211,9 +2157,7 @@ export default function Dashboard() {
                   <div className="weather-detail">
                     <Wind size={20} />
 
-                    <span>
-                      Wind
-                    </span>
+                    <span>Wind</span>
 
                     <strong>
                       {numberValue(
@@ -2225,9 +2169,7 @@ export default function Dashboard() {
                   </div>
 
                   <div className="weather-detail">
-                    <Gauge
-                      size={20}
-                    />
+                    <Gauge size={20} />
 
                     <span>
                       Visibility
@@ -2247,9 +2189,7 @@ export default function Dashboard() {
           </aside>
         </section>
 
-        {/* ====================================================
-            STATUS FOOTER
-        ==================================================== */}
+        {/* STATUS */}
 
         <section className="dashboard-status-row">
           <div className="status-item">

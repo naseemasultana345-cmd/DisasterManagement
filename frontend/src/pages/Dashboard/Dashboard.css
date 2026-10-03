@@ -1,29 +1,58 @@
-/* =========================================================
-   DISASTER ALERT DASHBOARD
-   Reference-style emergency dashboard
-========================================================= */
+/* ============================================================
+   DISASTER SAFE / DISASTER ALERT
+   DASHBOARD CSS
+   Matches the supplied Dashboard.jsx
+   ============================================================ */
 
-* {
-  box-sizing: border-box;
-}
+/* ============================================================
+   GLOBAL
+   ============================================================ */
 
-.dashboard {
+.dashboard-page {
   min-height: 100vh;
-  background: #f4f7fa;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  background: #f5f7fb;
   color: #172033;
   font-family:
     Inter,
+    ui-sans-serif,
     system-ui,
     -apple-system,
     BlinkMacSystemFont,
     "Segoe UI",
     sans-serif;
+  overflow-x: hidden;
 }
 
+.dashboard-page *,
+.dashboard-page *::before,
+.dashboard-page *::after {
+  box-sizing: border-box;
+}
 
-/* =========================================================
+.dashboard-page button,
+.dashboard-page input {
+  font: inherit;
+}
+
+.dashboard-page button {
+  cursor: pointer;
+}
+
+.dashboard-page button:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.dashboard-page img {
+  max-width: 100%;
+}
+
+/* ============================================================
    HEADER
-========================================================= */
+   ============================================================ */
 
 .dashboard-header {
   position: sticky;
@@ -32,1995 +61,2192 @@
 
   width: 100%;
   min-height: 76px;
-
-  padding: 12px 30px;
+  padding: 0 30px;
 
   display: flex;
   align-items: center;
-  gap: 25px;
+  justify-content: space-between;
+  gap: 24px;
 
-  background: rgba(255, 255, 255, 0.97);
-
-  border-bottom: 1px solid #e5e9ef;
-
-  box-shadow:
-    0 2px 12px rgba(15, 23, 42, 0.06);
-
-  backdrop-filter: blur(12px);
+  background: #ffffff;
+  border-bottom: 1px solid #e7eaf0;
+  box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
 }
 
+.header-left {
+  min-width: 0;
 
-/* =========================================================
-   BRAND
-========================================================= */
-
-.dashboard-brand {
   display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.mobile-menu-button {
+  display: none;
+
+  width: 40px;
+  height: 40px;
+  padding: 0;
+
+  align-items: center;
+  justify-content: center;
+
+  border: 1px solid #e0e5eb;
+  border-radius: 9px;
+
+  background: #ffffff;
+  color: #303948;
+}
+
+.mobile-menu-button:hover {
+  background: #f7f8fa;
+  color: #df202b;
+}
+
+.brand {
+  flex-shrink: 0;
+
+  display: inline-flex;
   align-items: center;
   gap: 11px;
 
-  flex-shrink: 0;
+  cursor: pointer;
+  user-select: none;
 }
 
 .brand-icon {
   width: 43px;
   height: 43px;
+  flex-shrink: 0;
 
   display: flex;
   align-items: center;
   justify-content: center;
 
-  border-radius: 11px;
+  border-radius: 12px;
 
-  background: #fff0f0;
+  background: #e9232e;
+  color: #ffffff;
 
-  font-size: 24px;
+  box-shadow: 0 6px 15px rgba(233, 35, 46, 0.22);
 }
 
-.brand-text h1 {
-  margin: 0;
-
+.brand-name {
   color: #172033;
 
-  font-size: 19px;
+  font-size: 20px;
   font-weight: 800;
   letter-spacing: -0.3px;
-}
 
-.brand-text span {
-  display: block;
-
-  margin-top: 2px;
-
-  color: #7b8494;
-
-  font-size: 10px;
-}
-
-
-/* =========================================================
-   NAVIGATION
-========================================================= */
-
-.dashboard-nav {
-  flex: 1;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  gap: 27px;
-}
-
-.dashboard-nav-link {
-  position: relative;
-
-  padding: 26px 2px 22px;
-
-  color: #5d6675;
-
-  font-size: 13px;
-  font-weight: 600;
-
-  text-decoration: none;
-
-  transition:
-    color 0.2s ease;
-}
-
-.dashboard-nav-link:hover {
-  color: #dc2626;
-}
-
-.dashboard-nav-link.active {
-  color: #dc2626;
-}
-
-.dashboard-nav-link.active::after {
-  content: "";
-
-  position: absolute;
-
-  left: 0;
-  right: 0;
-  bottom: 14px;
-
-  height: 2px;
-
-  border-radius: 5px;
-
-  background: #dc2626;
-}
-
-
-/* =========================================================
-   HEADER RIGHT
-========================================================= */
-
-.dashboard-header-right {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-
-  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .connection-status {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
+  gap: 8px;
 
-  padding: 8px 12px;
+  min-height: 32px;
+  padding: 6px 11px;
 
-  border-radius: 20px;
+  border-radius: 999px;
 
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
 
   white-space: nowrap;
 }
 
 .connection-status.online {
-  color: #16805c;
-  background: #e9f9f0;
+  color: #147a43;
+  background: #ecfdf3;
+  border: 1px solid #ccefdc;
 }
 
 .connection-status.offline {
-  color: #b42318;
-  background: #fff0ef;
+  color: #a45b00;
+  background: #fff5e9;
+  border: 1px solid #f8d8a8;
 }
 
-.status-dot {
-  width: 7px;
-  height: 7px;
+.connection-dot {
+  width: 8px;
+  height: 8px;
+  flex-shrink: 0;
 
   border-radius: 50%;
-
   background: currentColor;
 }
 
-.header-notification-button {
-  width: 38px;
-  height: 38px;
+/* ============================================================
+   DESKTOP NAVIGATION
+   ============================================================ */
+
+.desktop-navigation {
+  flex: 1;
 
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 5px;
+}
 
-  border: 1px solid #e2e7ed;
-  border-radius: 10px;
+.nav-link,
+.settings-button {
+  min-height: 40px;
 
-  background: #ffffff;
+  padding: 8px 13px;
 
-  cursor: pointer;
+  border: none;
+  border-radius: 9px;
 
-  font-size: 17px;
+  background: transparent;
+  color: #626c7d;
+
+  font-size: 13px;
+  font-weight: 650;
 
   transition:
-    transform 0.2s ease,
+    background 0.2s ease,
+    color 0.2s ease;
+}
+
+.nav-link:hover,
+.nav-link.active {
+  background: #fef0f1;
+  color: #df202b;
+}
+
+.settings-button {
+  width: 40px;
+  padding: 0;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  margin-left: 4px;
+}
+
+.settings-button:hover {
+  background: #f1f3f6;
+  color: #df202b;
+}
+
+/* ============================================================
+   HEADER RIGHT
+   ============================================================ */
+
+.header-right {
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.sos-header-button {
+  min-height: 43px;
+  padding: 0 16px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  border: none;
+  border-radius: 10px;
+
+  background: #e9232e;
+  color: #ffffff;
+
+  font-size: 13px;
+  font-weight: 800;
+
+  box-shadow: 0 7px 16px rgba(233, 35, 46, 0.18);
+
+  user-select: none;
+
+  transition:
+    transform 0.15s ease,
+    background 0.2s ease,
     box-shadow 0.2s ease;
 }
 
-.header-notification-button:hover {
-  transform: translateY(-1px);
-
-  box-shadow:
-    0 5px 14px rgba(15, 23, 42, 0.10);
+.sos-header-button:hover {
+  background: #cf1722;
+  box-shadow: 0 9px 20px rgba(233, 35, 46, 0.25);
 }
 
-
-/* =========================================================
-   HEADER SOS
-========================================================= */
-
-.header-sos-wrapper {
-  display: flex;
-  align-items: center;
+.sos-header-button:active,
+.sos-header-button.pressed {
+  transform: scale(0.97);
+  background: #b8121c;
 }
 
-.header-sos-wrapper button,
-.header-sos-wrapper .sos-button {
-  min-width: 145px !important;
-  min-height: 43px !important;
-
-  border-radius: 10px !important;
-
-  font-size: 13px !important;
-}
-
-
-/* =========================================================
-   MAIN
-========================================================= */
-
-.dashboard-content {
-  width: min(1400px, calc(100% - 40px));
-
-  margin: 0 auto;
-
-  padding: 18px 0 45px;
-}
-
-
-/* =========================================================
-   TOP DISASTER ALERT
-========================================================= */
-
-.top-disaster-alert {
-  min-height: 72px;
-
-  margin-bottom: 14px;
-
-  padding: 12px 17px;
-
-  display: flex;
-  align-items: center;
-  gap: 14px;
-
-  border: 1px solid #f4c6c6;
-  border-radius: 11px;
-
-  background:
-    linear-gradient(
-      90deg,
-      #fff0f0,
-      #fff5f5
-    );
-
-  box-shadow:
-    0 3px 12px rgba(220, 38, 38, 0.06);
-}
-
-.top-alert-icon {
-  width: 44px;
-  height: 44px;
-
+.profile-button {
+  width: 43px;
+  height: 43px;
   flex-shrink: 0;
 
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
 
+  border: 1px solid #e2e6ec;
   border-radius: 50%;
 
-  background: #ffe0df;
-
-  font-size: 23px;
-}
-
-.top-alert-content {
-  min-width: 0;
-  flex: 1;
-}
-
-.top-alert-title-row {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 5px;
-}
-
-.top-alert-title-row h2 {
-  margin: 0;
-
-  color: #b42318;
-
-  font-size: 15px;
-  font-weight: 800;
-}
-
-.top-alert-title-row span {
-  color: #b42318;
-
-  font-size: 14px;
-  font-weight: 700;
-}
-
-.top-alert-content p {
-  margin: 5px 0 0;
-
-  color: #9d3030;
-
-  font-size: 12px;
-  line-height: 1.45;
-}
-
-.top-alert-status {
-  padding: 6px 10px;
-
-  border-radius: 20px;
-
-  color: #ffffff;
-  background: #dc2626;
-
-  font-size: 9px;
-  font-weight: 800;
-
-  white-space: nowrap;
-}
-
-.top-alert-loading,
-.top-safe-alert {
-  display: flex;
-  align-items: center;
-  gap: 13px;
-}
-
-.top-safe-alert {
-  width: 100%;
-}
-
-.top-safe-alert strong {
-  color: #13795b;
-  font-size: 14px;
-}
-
-.top-safe-alert p {
-  margin: 3px 0 0;
-
-  color: #3e806d;
-
-  font-size: 11px;
-}
-
-
-/* =========================================================
-   OFFLINE
-========================================================= */
-
-.offline-alert {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-
-  margin-bottom: 14px;
-
-  padding: 12px 15px;
-
-  border: 1px solid #fed7aa;
-  border-radius: 10px;
-
-  background: #fff7ed;
-}
-
-.offline-icon {
-  font-size: 22px;
-}
-
-.offline-alert strong {
-  color: #9a3412;
-
-  font-size: 12px;
-}
-
-.offline-alert p {
-  margin: 2px 0 0;
-
-  color: #9a3412;
-
-  font-size: 11px;
-}
-
-
-/* =========================================================
-   PRIMARY GRID
-========================================================= */
-
-.primary-dashboard-grid {
-  display: grid;
-
-  grid-template-columns:
-    minmax(0, 2.05fr)
-    minmax(390px, 0.95fr);
-
-  gap: 14px;
-
-  align-items: stretch;
-
-  margin-bottom: 14px;
-}
-
-
-/* =========================================================
-   MAP CARD
-========================================================= */
-
-.map-card {
-  min-width: 0;
-
-  padding: 10px;
-
-  border: 1px solid #e2e7ed;
-  border-radius: 14px;
-
   background: #ffffff;
-
-  box-shadow:
-    0 3px 14px rgba(15, 23, 42, 0.05);
-}
-
-.map-card-header {
-  min-height: 50px;
-
-  padding: 5px 7px 10px;
-
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  gap: 15px;
-}
-
-.map-card-header h2 {
-  margin: 0;
-
-  color: #172033;
-
-  font-size: 18px;
-  font-weight: 800;
-}
-
-.map-card-header p {
-  margin: 3px 0 0;
-
-  color: #7b8494;
-
-  font-size: 11px;
-}
-
-.map-header-actions {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-}
-
-.map-live-badge {
-  padding: 5px 8px;
-
-  border-radius: 15px;
-
-  color: #087443;
-  background: #e9f9f0;
-
-  font-size: 9px;
-  font-weight: 800;
-}
-
-.radius-badge {
-  padding: 5px 8px;
-
-  border-radius: 15px;
-
-  color: #315fb6;
-  background: #eef5ff;
-
-  font-size: 9px;
-  font-weight: 800;
-}
-
-.map-container {
-  width: 100%;
-
-  min-height: 535px;
-
-  overflow: hidden;
-
-  border-radius: 11px;
-}
-
-
-/* =========================================================
-   SAFE HAVENS
-========================================================= */
-
-.safe-havens-card {
-  min-width: 0;
-
-  padding: 15px;
-
-  border: 1px solid #e2e7ed;
-  border-radius: 14px;
-
-  background: #ffffff;
-
-  box-shadow:
-    0 3px 14px rgba(15, 23, 42, 0.05);
-
-  display: flex;
-  flex-direction: column;
-}
-
-.safe-havens-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  gap: 10px;
-
-  margin-bottom: 12px;
-}
-
-.safe-havens-heading {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.safe-havens-icon {
-  font-size: 22px;
-}
-
-.safe-havens-header h2 {
-  margin: 0;
-
-  color: #172033;
-
-  font-size: 17px;
-  font-weight: 800;
-}
-
-.safe-havens-header p {
-  margin: 4px 0 0 30px;
-
-  color: #7b8494;
-
-  font-size: 10px;
-}
-
-.safe-havens-count {
-  min-width: 27px;
-  height: 27px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  border-radius: 50%;
-
-  color: #147a55;
-  background: #e9f9f0;
-
-  font-size: 11px;
-  font-weight: 800;
-}
-
-
-/* =========================================================
-   SAFE HAVEN LIST
-========================================================= */
-
-.safe-havens-list {
-  display: flex;
-  flex-direction: column;
-
-  gap: 9px;
-
-  flex: 1;
-}
-
-.safe-haven-card {
-  position: relative;
-
-  display: grid;
-
-  grid-template-columns:
-    74px
-    minmax(0, 1fr);
-
-  gap: 10px;
-
-  padding: 9px;
-
-  border: 1px solid #e4e8ee;
-  border-radius: 11px;
-
-  background: #ffffff;
+  color: #4f596a;
 
   transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease,
-    border-color 0.2s ease;
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
 }
 
-.safe-haven-card:hover {
-  transform: translateY(-1px);
-
-  border-color: #cfd7e1;
-
-  box-shadow:
-    0 5px 14px rgba(15, 23, 42, 0.08);
+.profile-button:hover {
+  background: #f7f8fa;
+  border-color: #d5dbe3;
+  color: #df202b;
 }
 
-.featured-safe-haven {
-  border-color: #b8dfca;
+/* ============================================================
+   MOBILE NAVIGATION
+   ============================================================ */
 
-  background:
-    linear-gradient(
-      135deg,
-      #ffffff,
-      #f8fffb
-    );
+.mobile-navigation {
+  width: calc(100% - 28px);
+
+  margin: 12px auto 0;
+  padding: 8px;
+
+  position: relative;
+  z-index: 900;
+
+  display: none;
+
+  background: #ffffff;
+  border: 1px solid #e7eaf0;
+  border-radius: 14px;
+
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.09);
 }
 
-.safe-haven-image {
-  width: 74px;
-  height: 74px;
+.mobile-navigation button {
+  width: 100%;
+  min-height: 44px;
 
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 11px;
 
-  overflow: hidden;
+  padding: 9px 12px;
 
-  border-radius: 8px;
+  border: none;
+  border-radius: 9px;
 
-  background:
-    linear-gradient(
-      135deg,
-      #dce9e3,
-      #eef3ef
-    );
+  background: transparent;
+  color: #475164;
 
-  font-size: 30px;
+  text-align: left;
+
+  font-size: 14px;
+  font-weight: 650;
 }
 
-.safe-haven-main {
-  min-width: 0;
+.mobile-navigation button:hover {
+  background: #fef0f1;
+  color: #df202b;
 }
 
-.safe-haven-title-row {
+/* ============================================================
+   MAIN CONTENT
+   ============================================================ */
+
+.dashboard-content {
+  width: min(1480px, calc(100% - 48px));
+
+  margin: 0 auto;
+  padding: 25px 0 36px;
+}
+
+/* ============================================================
+   OFFLINE BANNER
+   ============================================================ */
+
+.offline-banner {
+  width: 100%;
+  min-height: 48px;
+
+  margin-bottom: 14px;
+  padding: 10px 14px;
+
   display: flex;
-  align-items: flex-start;
+  align-items: center;
+  gap: 10px;
 
-  gap: 5px;
-}
+  border: 1px solid #f4d69f;
+  border-radius: 10px;
 
-.safe-haven-title-row h3 {
-  margin: 0;
-
-  color: #202a3a;
+  background: #fff7e8;
+  color: #8a5700;
 
   font-size: 13px;
-  line-height: 1.25;
+  font-weight: 650;
 }
 
-.recommended-mini {
-  flex-shrink: 0;
-
-  padding: 3px 5px;
-
-  border-radius: 5px;
-
-  color: #13795b;
-  background: #e6f8ef;
-
-  font-size: 7px;
-  font-weight: 800;
-  text-transform: uppercase;
+.offline-banner span {
+  flex: 1;
 }
 
-.safe-haven-distance {
-  margin-top: 5px;
+.offline-banner button {
+  min-height: 32px;
 
-  color: #697384;
-
-  font-size: 10px;
-  font-weight: 600;
-}
-
-.safe-haven-address {
-  margin: 4px 0;
-
-  color: #7d8694;
-
-  font-size: 9px;
-
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.safe-haven-bottom {
-  display: flex;
-  flex-wrap: wrap;
-
-  gap: 5px;
-
-  margin-top: 6px;
-}
-
-.beds-badge {
-  padding: 4px 6px;
-
-  border-radius: 10px;
-
-  color: #16805c;
-  background: #e9f9f0;
-
-  font-size: 8px;
-  font-weight: 700;
-}
-
-.elevation-badge {
-  padding: 4px 6px;
-
-  border-radius: 10px;
-
-  color: #596579;
-  background: #f1f4f7;
-
-  font-size: 8px;
-  font-weight: 700;
-}
-
-.safe-haven-direction-button {
-  grid-column: 2;
-
-  justify-self: start;
+  padding: 5px 10px;
 
   display: inline-flex;
   align-items: center;
   gap: 6px;
 
-  margin-top: 1px;
-  padding: 7px 10px;
+  border: 1px solid #e8c37e;
+  border-radius: 7px;
 
-  border: 1px solid #dce4ee;
+  background: #ffffff;
+  color: #8a5700;
+
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.offline-banner button:hover {
+  background: #fffaf2;
+}
+
+/* ============================================================
+   ERROR
+   ============================================================ */
+
+.dashboard-error {
+  width: 100%;
+  min-height: 46px;
+
+  margin-bottom: 14px;
+  padding: 9px 13px;
+
+  display: flex;
+  align-items: center;
+  gap: 9px;
+
+  border: 1px solid #f4c4c8;
+  border-radius: 10px;
+
+  background: #fff0f1;
+  color: #a91622;
+
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.dashboard-error span {
+  flex: 1;
+}
+
+.dashboard-error button {
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: none;
+  border-radius: 7px;
+
+  background: transparent;
+  color: inherit;
+}
+
+.dashboard-error button:hover {
+  background: rgba(169, 22, 34, 0.08);
+}
+
+/* ============================================================
+   DISASTER ALERT
+   ============================================================ */
+
+.disaster-alert-banner {
+  width: 100%;
+  min-height: 82px;
+
+  margin-bottom: 20px;
+  padding: 15px 17px;
+
+  display: flex;
+  align-items: center;
+  gap: 14px;
+
+  border: 1px solid #f1c98d;
+  border-radius: 13px;
+
+  background: #fff4e7;
+  color: #6e3e00;
+
+  box-shadow: 0 4px 15px rgba(126, 81, 0, 0.05);
+}
+
+.alert-icon {
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 12px;
+
+  background: #ffdfaa;
+  color: #b96700;
+}
+
+.alert-content {
+  min-width: 0;
+  flex: 1;
+}
+
+.alert-title {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+
+  color: #6d430d;
+
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.alert-title strong {
+  color: #a54e00;
+
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.alert-content p {
+  margin: 4px 0 0;
+
+  color: #765b35;
+
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.close-alert {
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: none;
   border-radius: 8px;
 
-  color: #1769d2;
-  background: #f8fbff;
+  background: transparent;
+  color: #8c6b3b;
+}
 
-  font-size: 9px;
-  font-weight: 800;
+.close-alert:hover {
+  background: rgba(137, 90, 12, 0.08);
+  color: #5f3a00;
+}
 
-  cursor: pointer;
+/* ============================================================
+   MAIN GRID
+   ============================================================ */
+
+.dashboard-main-grid {
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1.75fr)
+    minmax(330px, 0.85fr);
+
+  gap: 20px;
+  align-items: stretch;
+}
+
+/* ============================================================
+   MAP CARD
+   ============================================================ */
+
+.map-section-card {
+  min-width: 0;
+
+  overflow: hidden;
+
+  background: #ffffff;
+  border: 1px solid #e4e8ee;
+  border-radius: 15px;
+
+  box-shadow: 0 5px 18px rgba(15, 23, 42, 0.045);
+}
+
+.map-toolbar {
+  min-height: 68px;
+
+  padding: 12px 15px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+
+  border-bottom: 1px solid #e8ebef;
+}
+
+.map-switcher {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+
+  padding: 3px;
+
+  border-radius: 8px;
+
+  background: #f1f3f6;
+}
+
+.map-switcher button {
+  min-width: 76px;
+  min-height: 34px;
+
+  border: none;
+  border-radius: 6px;
+
+  background: transparent;
+  color: #697386;
+
+  font-size: 12px;
+  font-weight: 750;
 
   transition:
     background 0.2s ease,
-    border-color 0.2s ease;
+    color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
-.safe-haven-direction-button:hover {
-  background: #eef6ff;
-  border-color: #bcd4f2;
+.map-switcher button:hover {
+  color: #303948;
 }
 
-.safe-haven-direction-button span:first-child {
-  font-size: 13px;
+.map-switcher button.active {
+  background: #ffffff;
+  color: #252d3b;
+
+  box-shadow: 0 2px 7px rgba(15, 23, 42, 0.08);
 }
 
-.safe-havens-footer {
+/* ============================================================
+   RISK CONTROL
+   ============================================================ */
+
+.risk-control {
   display: flex;
-  justify-content: space-between;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 13px;
 
-  gap: 10px;
+  color: #697386;
 
-  margin-top: 10px;
-  padding-top: 9px;
+  font-size: 11px;
+  font-weight: 650;
+}
 
-  border-top: 1px solid #edf0f4;
+.risk-control label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 
-  color: #8a93a1;
+  color: #30394a;
+  font-weight: 750;
+}
 
+.risk-control input {
+  width: 14px;
+  height: 14px;
+
+  accent-color: #e9232e;
+}
+
+.risk-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.risk-color {
+  width: 9px;
+  height: 9px;
+  flex-shrink: 0;
+
+  display: inline-block;
+
+  border-radius: 50%;
+}
+
+.risk-color.high {
+  background: #e9232e;
+}
+
+.risk-color.medium {
+  background: #f39a23;
+}
+
+.risk-color.low {
+  background: #32a66b;
+}
+
+/* ============================================================
+   MAP CONTAINER
+   ============================================================ */
+
+.map-container {
+  position: relative;
+
+  width: 100%;
+  height: 520px;
+  min-height: 420px;
+
+  overflow: hidden;
+
+  background: #e8edf2;
+}
+
+/*
+   DisasterMap itself must occupy the entire map area.
+*/
+
+.map-container > *:first-child {
+  width: 100%;
+  height: 100%;
+}
+
+/* ============================================================
+   MAP LEGEND
+   ============================================================ */
+
+.map-legend {
+  position: absolute;
+  left: 14px;
+  bottom: 14px;
+  z-index: 20;
+
+  min-width: 160px;
+
+  padding: 10px 11px;
+
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(218, 224, 231, 0.95);
+  border-radius: 9px;
+
+  box-shadow: 0 5px 15px rgba(15, 23, 42, 0.12);
+
+  backdrop-filter: blur(5px);
+}
+
+.legend-item {
+  min-height: 23px;
+
+  display: flex;
+  align-items: center;
+  gap: 7px;
+
+  color: #5b6575;
+
+  font-size: 10px;
+  font-weight: 650;
+}
+
+.legend-dot.location {
+  width: 10px;
+  height: 10px;
+  flex-shrink: 0;
+
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+
+  background: #2675ed;
+
+  box-shadow: 0 0 0 2px #2675ed;
+}
+
+.legend-shelter {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background: #24a567;
+  color: #ffffff;
+}
+
+.legend-risk {
+  width: 15px;
+  height: 9px;
+  flex-shrink: 0;
+
+  border: 1px solid rgba(233, 35, 46, 0.6);
+  border-radius: 2px;
+
+  background: rgba(233, 35, 46, 0.35);
+}
+
+.legend-road {
+  width: 16px;
+  height: 3px;
+  flex-shrink: 0;
+
+  border-radius: 2px;
+
+  background: #767d88;
+}
+
+.map-scale {
+  margin-top: 7px;
+  padding-top: 7px;
+
+  display: flex;
+  align-items: center;
+  gap: 5px;
+
+  border-top: 1px solid #e8ebef;
+
+  color: #727b89;
+}
+
+.map-scale span {
+  display: block;
+
+  width: 28px;
+  height: 4px;
+
+  border-left: 2px solid #697386;
+  border-right: 2px solid #697386;
+  border-bottom: 2px solid #697386;
+}
+
+.map-scale small {
   font-size: 9px;
 }
 
+/* ============================================================
+   MAP CONTROLS
+   ============================================================ */
 
-/* =========================================================
-   SAFE HAVEN EMPTY / LOADING
-========================================================= */
+.map-controls {
+  position: absolute;
+  right: 13px;
+  bottom: 14px;
+  z-index: 30;
 
-.safe-havens-loading,
-.safe-havens-empty {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.map-controls button {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 1px solid #dfe4ea;
+  border-radius: 8px;
+
+  background: rgba(255, 255, 255, 0.96);
+  color: #3e4756;
+
+  font-size: 20px;
+  font-weight: 600;
+
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.1);
+
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
+}
+
+.map-controls button:hover {
+  background: #ffffff;
+  color: #df202b;
+}
+
+.map-controls button:disabled {
+  opacity: 0.55;
+}
+
+/* ============================================================
+   SAFE HAVENS
+   ============================================================ */
+
+.safe-havens-card {
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+
+  padding: 17px;
+
+  background: #ffffff;
+  border: 1px solid #e4e8ee;
+  border-radius: 15px;
+
+  box-shadow: 0 5px 18px rgba(15, 23, 42, 0.045);
+}
+
+.section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+
+  margin-bottom: 14px;
+}
+
+.heading-title {
+  min-width: 0;
+
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.heading-title h2 {
+  margin: 0;
+
+  color: #202837;
+
+  font-size: 17px;
+  line-height: 1.3;
+  font-weight: 800;
+  letter-spacing: -0.25px;
+}
+
+.heading-icon {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 9px;
+}
+
+.heading-icon.green {
+  background: #eaf8f0;
+  color: #20965b;
+}
+
+.view-all-button {
+  padding: 7px 4px;
+
+  border: none;
+  background: transparent;
+  color: #d9202b;
+
+  font-size: 12px;
+  font-weight: 800;
+
+  white-space: nowrap;
+}
+
+.view-all-button:hover {
+  text-decoration: underline;
+}
+
+/* ============================================================
+   SAFE HAVENS LIST
+   ============================================================ */
+
+.safe-havens-list {
   flex: 1;
 
-  min-height: 250px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ============================================================
+   LOADING
+   ============================================================ */
+
+.loading-state {
+  flex: 1;
+  min-height: 190px;
 
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 9px;
+
+  color: #758091;
+
+  text-align: center;
+
+  font-size: 12px;
+}
+
+/* ============================================================
+   SHELTER CARD
+   ============================================================ */
+
+.shelter-card {
+  display: flex;
+  gap: 10px;
+
+  padding: 10px;
+
+  background: #ffffff;
+  border: 1px solid #e6e9ee;
+  border-radius: 11px;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+.shelter-card:hover {
+  transform: translateY(-1px);
+
+  border-color: #b9dfc9;
+
+  box-shadow: 0 5px 14px rgba(32, 150, 91, 0.09);
+}
+
+.shelter-card.selected {
+  border-color: #76c69a;
+
+  box-shadow: 0 5px 16px rgba(32, 150, 91, 0.14);
+
+  background: #fcfffd;
+}
+
+/* ============================================================
+   SHELTER IMAGE
+   ============================================================ */
+
+.shelter-image {
+  width: 75px;
+  height: 78px;
+  flex-shrink: 0;
+
+  overflow: hidden;
+
+  border-radius: 9px;
+
+  background: #edf2f0;
+}
+
+.shelter-image img {
+  width: 100%;
+  height: 100%;
+
+  display: block;
+
+  object-fit: cover;
+}
+
+.shelter-placeholder {
+  width: 100%;
+  height: 100%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: #eaf7ef;
+  color: #47a16f;
+}
+
+/* ============================================================
+   SHELTER INFORMATION
+   ============================================================ */
+
+.shelter-information {
+  min-width: 0;
+  flex: 1;
+
+  display: flex;
+  flex-direction: column;
+}
+
+.shelter-information h3 {
+  margin: 0 0 4px;
+
+  color: #202837;
+
+  font-size: 13px;
+  line-height: 1.3;
+  font-weight: 800;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shelter-distance {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+
+  color: #25935b;
+
+  font-size: 10px;
+  font-weight: 750;
+}
+
+.shelter-address {
+  margin: 4px 0 8px;
+
+  color: #778090;
+
+  font-size: 10px;
+  line-height: 1.35;
+
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+
+  overflow: hidden;
+}
+
+.shelter-bottom {
+  margin-top: auto;
+
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 7px;
+}
+
+.shelter-tags {
+  min-width: 0;
+
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
+.beds-tag,
+.elevation-tag {
+  min-height: 22px;
+
+  padding: 3px 6px;
+
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+
+  border-radius: 5px;
+
+  font-size: 8px;
+  font-weight: 750;
+
+  white-space: nowrap;
+}
+
+.beds-tag {
+  background: #edf8f2;
+  color: #228e58;
+}
+
+.elevation-tag {
+  background: #eef5ff;
+  color: #3973b8;
+}
+
+.direction-button {
+  min-height: 29px;
+  flex-shrink: 0;
+
+  padding: 5px 8px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+
+  border: 1px solid #dfe4ea;
+  border-radius: 6px;
+
+  background: #ffffff;
+  color: #4e5868;
+
+  font-size: 9px;
+  font-weight: 750;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.direction-button:hover {
+  background: #f4fbf7;
+  border-color: #acd8be;
+  color: #208c57;
+}
+
+/* ============================================================
+   EMPTY STATE
+   ============================================================ */
+
+.empty-state {
+  flex: 1;
+  min-height: 190px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+
+  padding: 20px;
+
+  color: #8a93a1;
 
   text-align: center;
 }
 
-.safe-havens-loading p,
-.safe-havens-empty p {
-  margin: 8px 0 0;
-
-  color: #7b8494;
-
-  font-size: 11px;
+.empty-state svg {
+  margin-bottom: 2px;
+  color: #45a16d;
 }
 
-.safe-havens-empty > div {
-  font-size: 35px;
-}
-
-.safe-havens-empty strong {
-  margin-top: 8px;
-
-  color: #394354;
+.empty-state strong {
+  color: #4a5464;
 
   font-size: 13px;
 }
 
-.loading-spinner {
-  width: 26px;
-  height: 26px;
+.empty-state span {
+  max-width: 220px;
 
-  border: 3px solid #e4e8ee;
-  border-top-color: #dc2626;
+  font-size: 10px;
+  line-height: 1.5;
+}
 
-  border-radius: 50%;
+.empty-state button {
+  margin-top: 5px;
+  padding: 7px 11px;
 
-  animation:
-    dashboard-spin 0.8s linear infinite;
+  border: none;
+  border-radius: 7px;
+
+  background: #eaf8f0;
+  color: #238c56;
+
+  font-size: 10px;
+  font-weight: 750;
+}
+
+.empty-state button:hover {
+  background: #dff4e8;
+}
+
+/* ============================================================
+   BOTTOM GRID
+   ============================================================ */
+
+.dashboard-bottom-grid {
+  margin-top: 20px;
+
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1.65fr)
+    minmax(350px, 0.85fr);
+
+  gap: 20px;
+  align-items: stretch;
+}
+
+/* ============================================================
+   QUICK DIAL
+   ============================================================ */
+
+.quick-dial-section {
+  min-width: 0;
+
+  padding: 18px;
+
+  background: #ffffff;
+  border: 1px solid #e4e8ee;
+  border-radius: 15px;
+
+  box-shadow: 0 5px 18px rgba(15, 23, 42, 0.045);
+}
+
+.bottom-section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  margin-bottom: 14px;
+}
+
+.bottom-section-heading > div {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.bottom-section-heading svg {
+  color: #e9232e;
+}
+
+.bottom-section-heading h2 {
+  margin: 0;
+
+  color: #202837;
+
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -0.2px;
+}
+
+/* ============================================================
+   QUICK DIAL GRID
+   ============================================================ */
+
+.quick-dial-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.emergency-card {
+  min-width: 0;
+  min-height: 115px;
+
+  padding: 13px;
+
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  border-radius: 11px;
+
+  text-align: left;
+
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.emergency-card:hover {
+  transform: translateY(-2px);
+
+  box-shadow: 0 7px 16px rgba(15, 23, 42, 0.08);
+}
+
+.emergency-card.red {
+  border: 1px solid #e9232e;
+
+  background: #e9232e;
+  color: #ffffff;
+}
+
+.emergency-card.orange {
+  border: 1px solid #f08a21;
+
+  background: #fff2e6;
+  color: #9c4f00;
+}
+
+.emergency-card.white {
+  border: 1px solid #e2e6eb;
+
+  background: #ffffff;
+  color: #303948;
+}
+
+/* ============================================================
+   EMERGENCY ICON
+   ============================================================ */
+
+.emergency-icon {
+  width: 46px;
+  height: 46px;
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 10px;
+}
+
+.emergency-card.red .emergency-icon {
+  background: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+}
+
+.emergency-card.orange .emergency-icon {
+  background: #ffe0c1;
+  color: #df7413;
+}
+
+.emergency-card.white .emergency-icon {
+  background: #fcecee;
+  color: #e9232e;
+}
+
+.emergency-card.white .emergency-icon.ambulance {
+  background: #edf8f2;
+  color: #22955a;
+}
+
+.emergency-card.white .emergency-icon.police {
+  background: #eef3ff;
+  color: #476cc5;
+}
+
+/* ============================================================
+   EMERGENCY TEXT
+   ============================================================ */
+
+.emergency-text {
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.emergency-text span {
+  font-size: 10px;
+  font-weight: 700;
+  opacity: 0.8;
+}
+
+.emergency-text strong {
+  font-size: 24px;
+  line-height: 1.1;
+  font-weight: 850;
+  letter-spacing: -0.5px;
+}
+
+.emergency-text small {
+  font-size: 9px;
+  line-height: 1.25;
+  opacity: 0.72;
+}
+
+/* ============================================================
+   WEATHER
+   ============================================================ */
+
+.weather-card {
+  min-width: 0;
+
+  padding: 18px;
+
+  background: #ffffff;
+  border: 1px solid #e4e8ee;
+  border-radius: 15px;
+
+  box-shadow: 0 5px 18px rgba(15, 23, 42, 0.045);
+}
+
+.weather-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+
+  margin-bottom: 14px;
+}
+
+.weather-heading > div {
+  min-width: 0;
+
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.weather-heading svg {
+  flex-shrink: 0;
+  color: #3e86d6;
+}
+
+.weather-heading h2 {
+  margin: 0;
+
+  color: #202837;
+
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.weather-heading > span {
+  color: #8992a0;
+
+  font-size: 9px;
+
+  white-space: nowrap;
+}
+
+/* ============================================================
+   WEATHER CONTENT
+   ============================================================ */
+
+.weather-content {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.weather-main {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+
+  padding: 5px 0;
+}
+
+.weather-icon {
+  width: 76px;
+  height: 76px;
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 14px;
+
+  background: #eef6ff;
+  color: #4287d2;
+}
+
+.weather-temperature {
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.weather-temperature strong {
+  color: #202837;
+
+  font-size: 36px;
+  line-height: 1;
+  font-weight: 850;
+  letter-spacing: -1.5px;
+}
+
+.weather-temperature span {
+  color: #5d6878;
+
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.weather-temperature small {
+  max-width: 190px;
+
+  margin-top: 4px;
+
+  color: #ba6511;
+
+  font-size: 9px;
+  line-height: 1.35;
+}
+
+/* ============================================================
+   WEATHER DETAILS
+   ============================================================ */
+
+.weather-details {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+
+  padding-top: 12px;
+
+  border-top: 1px solid #edf0f3;
+}
+
+.weather-detail {
+  min-width: 0;
+
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto auto;
+
+  column-gap: 6px;
+
+  align-items: center;
+}
+
+.weather-detail svg {
+  grid-row: 1 / 3;
+
+  color: #5c92cb;
+}
+
+.weather-detail span {
+  color: #8a93a1;
+
+  font-size: 9px;
+}
+
+.weather-detail strong {
+  color: #364052;
+
+  font-size: 11px;
+  font-weight: 800;
+}
+
+/* ============================================================
+   WEATHER LOADING
+   ============================================================ */
+
+.weather-loading {
+  min-height: 165px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+
+  color: #778191;
+
+  font-size: 12px;
+}
+
+/* ============================================================
+   STATUS
+   ============================================================ */
+
+.dashboard-status-row {
+  min-height: 55px;
+
+  margin-top: 18px;
+  padding: 8px 12px;
+
+  display: flex;
+  align-items: center;
+  gap: 18px;
+
+  background: #ffffff;
+  border: 1px solid #e4e8ee;
+  border-radius: 12px;
+
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.035);
+}
+
+.status-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+
+  color: #687383;
+
+  font-size: 10px;
+  font-weight: 650;
+
+  white-space: nowrap;
+}
+
+.status-item svg {
+  flex-shrink: 0;
+  color: #289560;
+}
+
+.status-item:nth-child(2) svg {
+  color: #3f78c7;
+}
+
+.status-item:nth-child(3) svg {
+  color: #758090;
+}
+
+.refresh-dashboard-button {
+  min-height: 34px;
+
+  margin-left: auto;
+  padding: 6px 11px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+
+  border: 1px solid #dfe4ea;
+  border-radius: 7px;
+
+  background: #ffffff;
+  color: #4d5868;
+
+  font-size: 10px;
+  font-weight: 750;
+
+  white-space: nowrap;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.refresh-dashboard-button:hover {
+  background: #f6f8fa;
+  border-color: #cfd6df;
+  color: #df202b;
+}
+
+/* ============================================================
+   ANIMATION
+   ============================================================ */
+
+.spin {
+  animation: dashboard-spin 0.9s linear infinite;
 }
 
 @keyframes dashboard-spin {
+  from {
+    transform: rotate(0deg);
+  }
+
   to {
     transform: rotate(360deg);
   }
 }
 
-
-/* =========================================================
-   QUICK INFORMATION GRID
-========================================================= */
-
-.quick-information-grid {
-  display: grid;
-
-  grid-template-columns:
-    minmax(0, 1.75fr)
-    minmax(310px, 1fr);
-
-  gap: 14px;
-
-  margin-bottom: 14px;
-}
-
-
-/* =========================================================
-   EMERGENCY QUICK DIAL
-========================================================= */
-
-.emergency-dial-section,
-.weather-card {
-  padding: 15px;
-
-  border: 1px solid #e2e7ed;
-  border-radius: 14px;
-
-  background: #ffffff;
-
-  box-shadow:
-    0 3px 14px rgba(15, 23, 42, 0.05);
-}
-
-.quick-section-heading h2 {
-  margin: 0;
-
-  color: #172033;
-
-  font-size: 17px;
-  font-weight: 800;
-}
-
-.quick-section-heading p {
-  margin: 3px 0 11px;
-
-  color: #7b8494;
-
-  font-size: 10px;
-}
-
-.emergency-dial-grid {
-  display: grid;
-
-  grid-template-columns:
-    repeat(4, minmax(0, 1fr));
-
-  gap: 9px;
-}
-
-.emergency-dial-card {
-  min-height: 92px;
-
-  display: flex;
-  align-items: center;
-
-  gap: 10px;
-
-  padding: 11px;
-
-  border-radius: 11px;
-
-  text-decoration: none;
-
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
-}
-
-.emergency-dial-card:hover {
-  transform: translateY(-2px);
-
-  box-shadow:
-    0 7px 16px rgba(15, 23, 42, 0.10);
-}
-
-.emergency-dial-card .dial-icon {
-  width: 39px;
-  height: 39px;
-
-  flex-shrink: 0;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  border-radius: 10px;
-
-  color: #ffffff;
-
-  font-size: 19px;
-}
-
-.emergency-dial-card span {
-  display: block;
-
-  color: #ffffff;
-
-  font-size: 10px;
-  font-weight: 600;
-}
-
-.emergency-dial-card strong {
-  display: block;
-
-  margin-top: 1px;
-
-  color: #ffffff;
-
-  font-size: 25px;
-  line-height: 1;
-}
-
-.emergency-dial-card small {
-  display: block;
-
-  margin-top: 4px;
-
-  color: rgba(255, 255, 255, 0.82);
-
-  font-size: 8px;
-}
-
-.emergency-dial-card.emergency {
-  background: #ed2525;
-}
-
-.emergency-dial-card.emergency .dial-icon {
-  background: rgba(255,255,255,0.16);
-}
-
-.emergency-dial-card.fire {
-  background: #f68b16;
-}
-
-.emergency-dial-card.fire .dial-icon {
-  background: rgba(255,255,255,0.16);
-}
-
-.emergency-dial-card.ambulance {
-  background: #ffffff;
-
-  border: 1px solid #e1e5eb;
-}
-
-.emergency-dial-card.ambulance span,
-.emergency-dial-card.ambulance strong {
-  color: #1d2939;
-}
-
-.emergency-dial-card.ambulance small {
-  color: #7b8494;
-}
-
-.emergency-dial-card.ambulance .dial-icon {
-  color: #ffffff;
-  background: #dc2626;
-}
-
-.emergency-dial-card.police {
-  background: #ffffff;
-
-  border: 1px solid #e1e5eb;
-}
-
-.emergency-dial-card.police span,
-.emergency-dial-card.police strong {
-  color: #1d2939;
-}
-
-.emergency-dial-card.police small {
-  color: #7b8494;
-}
-
-.emergency-dial-card.police .dial-icon {
-  color: #ffffff;
-  background: #1769d2;
-}
-
-
-/* =========================================================
-   WEATHER
-========================================================= */
-
-.weather-card-header {
-  display: flex;
-  justify-content: space-between;
-
-  gap: 10px;
-}
-
-.weather-card-header h2 {
-  margin: 0;
-
-  color: #172033;
-
-  font-size: 17px;
-}
-
-.weather-card-header p {
-  margin: 3px 0 0;
-
-  color: #7b8494;
-
-  font-size: 10px;
-}
-
-.weather-live-badge {
-  align-self: flex-start;
-
-  padding: 5px 8px;
-
-  border-radius: 14px;
-
-  color: #16805c;
-  background: #e9f9f0;
-
-  font-size: 8px;
-  font-weight: 800;
-}
-
-.weather-main-display {
-  display: flex;
-  align-items: center;
-
-  gap: 13px;
-
-  margin-top: 10px;
-}
-
-.weather-large-icon {
-  font-size: 48px;
-  line-height: 1;
-}
-
-.weather-main-display span {
-  display: block;
-
-  color: #687386;
-
-  font-size: 10px;
-
-  text-transform: capitalize;
-}
-
-.weather-main-display strong {
-  display: block;
-
-  margin-top: 2px;
-
-  color: #111827;
-
-  font-size: 32px;
-  line-height: 1;
-}
-
-.weather-stats {
-  display: grid;
-
-  grid-template-columns: 1fr 1fr;
-
-  gap: 7px;
-
-  margin-top: 10px;
-}
-
-.weather-stats div {
-  padding: 8px;
-
-  border: 1px solid #e6eaf0;
-  border-radius: 8px;
-
-  background: #fafbfd;
-}
-
-.weather-stats span {
-  display: block;
-
-  color: #7c8696;
-
-  font-size: 9px;
-}
-
-.weather-stats strong {
-  display: block;
-
-  margin-top: 3px;
-
-  color: #1d2939;
-
-  font-size: 12px;
-}
-
-.weather-safety-condition {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  gap: 10px;
-
-  margin-top: 9px;
-
-  padding: 8px 10px;
-
-  border-radius: 8px;
-
-  background: #f4f7fa;
-}
-
-.weather-safety-condition span {
-  color: #687386;
-
-  font-size: 9px;
-}
-
-.weather-safety-condition strong {
-  color: #344054;
-
-  font-size: 10px;
-}
-
-.weather-safety-condition.heavy-rain {
-  background: #eef6ff;
-}
-
-.weather-safety-condition.extreme-heat {
-  background: #fff6e9;
-}
-
-.weather-safety-condition.thunderstorm {
-  background: #f1efff;
-}
-
-.weather-updated {
-  margin-top: 7px;
-
-  color: #8a93a1;
-
-  font-size: 8px;
-}
-
-.weather-loading,
-.weather-placeholder {
-  min-height: 130px;
-
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-
-  text-align: center;
-
-  color: #7b8494;
-
-  font-size: 10px;
-}
-
-.weather-placeholder > div {
-  font-size: 32px;
-}
-
-.weather-placeholder strong {
-  margin-top: 6px;
-
-  color: #394354;
-
-  font-size: 12px;
-}
-
-.weather-placeholder p {
-  max-width: 250px;
-
-  margin: 5px 0 0;
-
-  line-height: 1.5;
-}
-
-
-/* =========================================================
-   SAFETY GUIDANCE
-========================================================= */
-
-.safety-guidance-card {
-  margin-bottom: 14px;
-
-  padding: 17px;
-
-  border: 1px solid #e2e7ed;
-  border-radius: 14px;
-
-  background: #ffffff;
-
-  box-shadow:
-    0 3px 14px rgba(15, 23, 42, 0.05);
-}
-
-.safety-guidance-header {
-  display: flex;
-  align-items: center;
-
-  gap: 11px;
-}
-
-.safety-guidance-icon {
-  width: 43px;
-  height: 43px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  border-radius: 11px;
-
-  background: #edf5ff;
-
-  font-size: 22px;
-}
-
-.safety-guidance-header span {
-  color: #6d7787;
-
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 0.7px;
-}
-
-.safety-guidance-header h2 {
-  margin: 3px 0 0;
-
-  color: #172033;
-
-  font-size: 16px;
-}
-
-.safety-guidance-message {
-  margin: 11px 0;
-
-  color: #596579;
-
-  font-size: 11px;
-  line-height: 1.55;
-}
-
-.safety-guidance-actions {
-  display: grid;
-
-  grid-template-columns:
-    repeat(3, 1fr);
-
-  gap: 8px;
-}
-
-.safety-guidance-action {
-  display: flex;
-  align-items: flex-start;
-
-  gap: 7px;
-
-  padding: 9px;
-
-  border-radius: 8px;
-
-  background: #f7f9fb;
-}
-
-.safety-guidance-action > span {
-  color: #16805c;
-
-  font-size: 12px;
-  font-weight: 800;
-}
-
-.safety-guidance-action p {
-  margin: 0;
-
-  color: #596579;
-
-  font-size: 10px;
-  line-height: 1.4;
-}
-
-
-/* =========================================================
-   LOCATION
-========================================================= */
-
-.location-card {
-  display: flex;
-  align-items: center;
-
-  gap: 12px;
-
-  margin-bottom: 14px;
-
-  padding: 13px 15px;
-
-  border: 1px solid #e2e7ed;
-  border-radius: 12px;
-
-  background: #ffffff;
-}
-
-.location-icon {
-  width: 38px;
-  height: 38px;
-
-  flex-shrink: 0;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  border-radius: 10px;
-
-  background: #eef5ff;
-
-  font-size: 19px;
-}
-
-.location-info {
-  flex: 1;
-}
-
-.location-info span {
-  display: block;
-
-  color: #7a8494;
-
-  font-size: 8px;
-  font-weight: 800;
-  letter-spacing: 0.6px;
-}
-
-.location-friendly-text {
-  margin: 3px 0 0;
-
-  color: #344054 !important;
-
-  font-size: 11px !important;
-  font-weight: 600 !important;
-}
-
-.location-status {
-  padding: 5px 8px;
-
-  border-radius: 15px;
-
-  font-size: 8px;
-  font-weight: 800;
-}
-
-.location-status.current {
-  color: #13795b;
-  background: #e9f9f0;
-}
-
-.location-status.saved {
-  color: #b42318;
-  background: #fff0ef;
-}
-
-.map-button {
-  padding: 7px 10px;
-
-  border: 0;
-  border-radius: 7px;
-
-  color: #ffffff;
-  background: #1769d2;
-
-  font-size: 9px;
-  font-weight: 800;
-
-  cursor: pointer;
-}
-
-.map-button:hover {
-  background: #1257ae;
-}
-
-
-/* =========================================================
-   OFFLINE MAP
-========================================================= */
-
-.offline-map-section {
-  margin-bottom: 15px;
-
-  padding: 15px;
-
-  border: 1px solid #cbd5e1;
-  border-radius: 14px;
-
-  background: #ffffff;
-
-  box-shadow:
-    0 4px 15px rgba(15, 23, 42, 0.06);
-}
-
-.offline-map-section .section-title {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-
-  margin-bottom: 13px;
-}
-
-.section-heading-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.section-heading-row h2 {
-  margin: 0;
-
-  color: #172033;
-
-  font-size: 17px;
-}
-
-.offline-map-badge {
-  padding: 5px 8px;
-
-  border-radius: 15px;
-
-  color: #315fb6;
-  background: #eef5ff;
-
-  font-size: 8px;
-  font-weight: 800;
-}
-
-.close-map-button {
-  padding: 7px 10px;
-
-  border: 1px solid #fecaca;
-  border-radius: 7px;
-
-  color: #b42318;
-  background: #fff5f5;
-
-  font-size: 9px;
-  font-weight: 700;
-
-  cursor: pointer;
-}
-
-.offline-map-info {
-  display: flex;
-  align-items: center;
-
-  gap: 20px;
-
-  flex-wrap: wrap;
-
-  padding: 11px;
-
-  margin-bottom: 12px;
-
-  border: 1px solid #e5e9ef;
-  border-radius: 9px;
-
-  background: #f8fafc;
-}
-
-.offline-location-details {
-  display: flex;
-  align-items: center;
-
-  gap: 10px;
-
-  flex: 1;
-}
-
-.offline-location-icon {
-  width: 40px;
-  height: 40px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  border-radius: 9px;
-
-  background: #eef5ff;
-
-  font-size: 20px;
-}
-
-.offline-location-details h3 {
-  margin: 0;
-
-  color: #172033;
-
-  font-size: 13px;
-}
-
-.offline-location-details span {
-  color: #7b8494;
-
-  font-size: 9px;
-}
-
-.offline-location-distance {
-  display: flex;
-  flex-direction: column;
-
-  gap: 2px;
-}
-
-.offline-location-distance span {
-  color: #8a93a1;
-
-  font-size: 8px;
-  font-weight: 800;
-  text-transform: uppercase;
-}
-
-.offline-location-distance strong {
-  color: #172033;
-
-  font-size: 12px;
-}
-
-.offline-map-container {
-  width: 100%;
-  min-height: 500px;
-
-  overflow: hidden;
-
-  border-radius: 10px;
-}
-
-.offline-map-notice {
-  display: flex;
-  align-items: flex-start;
-
-  gap: 10px;
-
-  margin-top: 10px;
-
-  padding: 10px;
-
-  border-radius: 8px;
-
-  background: #fff7ed;
-  border: 1px solid #fed7aa;
-}
-
-.offline-notice-icon {
-  font-size: 18px;
-}
-
-.offline-map-notice strong {
-  color: #9a3412;
-
-  font-size: 10px;
-}
-
-.offline-map-notice p {
-  margin: 3px 0 0;
-
-  color: #9a3412;
-
-  font-size: 9px;
-  line-height: 1.45;
-}
-
-
-/* =========================================================
-   FOOTER
-========================================================= */
-
-.dashboard-footer {
-  padding: 25px 20px;
-
-  text-align: center;
-
-  background: #172033;
-
-  color: #ffffff;
-}
-
-.footer-brand {
-  font-size: 14px;
-  font-weight: 800;
-}
-
-.dashboard-footer p {
-  margin: 5px 0;
-
-  color: #d8dee8;
-
-  font-size: 10px;
-}
-
-.dashboard-footer span {
-  color: #9ba5b5;
-
-  font-size: 8px;
-}
-
-
-/* =========================================================
-   TABLET
-========================================================= */
-
-@media (max-width: 1100px) {
-
+/* ============================================================
+   LARGE DESKTOP
+   ============================================================ */
+
+@media (max-width: 1250px) {
   .dashboard-header {
-    padding: 12px 20px;
+    padding: 0 20px;
+    gap: 14px;
   }
 
-  .dashboard-nav {
-    gap: 15px;
+  .desktop-navigation {
+    gap: 1px;
   }
 
-  .dashboard-nav-link {
-    font-size: 11px;
+  .nav-link {
+    padding-left: 9px;
+    padding-right: 9px;
   }
 
-  .primary-dashboard-grid {
+  .dashboard-content {
+    width: min(100% - 32px, 1200px);
+  }
+
+  .dashboard-main-grid {
     grid-template-columns:
-      minmax(0, 1.5fr)
-      minmax(320px, 1fr);
+      minmax(0, 1.55fr)
+      minmax(300px, 0.85fr);
   }
 
-  .emergency-dial-grid {
-    grid-template-columns:
-      repeat(2, 1fr);
+  .quick-dial-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-
-  .safe-haven-card {
-    grid-template-columns:
-      65px
-      minmax(0, 1fr);
-  }
-
-  .safe-haven-image {
-    width: 65px;
-    height: 65px;
-  }
-
 }
 
+/* ============================================================
+   TABLET
+   ============================================================ */
 
-/* =========================================================
-   TABLET / SMALL LAPTOP
-========================================================= */
+@media (max-width: 1050px) {
+  .dashboard-header {
+    min-height: 70px;
+  }
 
-@media (max-width: 900px) {
-
-  .dashboard-nav {
+  .desktop-navigation {
     display: none;
   }
 
-  .primary-dashboard-grid {
+  .mobile-menu-button {
+    display: inline-flex;
+  }
+
+  .dashboard-main-grid {
     grid-template-columns: 1fr;
   }
 
   .map-container {
-    min-height: 500px;
+    height: 500px;
   }
 
-  .quick-information-grid {
+  .safe-havens-card {
+    min-height: auto;
+  }
+
+  .safe-havens-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dashboard-bottom-grid {
     grid-template-columns: 1fr;
   }
 
-  .safety-guidance-actions {
-    grid-template-columns: 1fr;
+  .quick-dial-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
+  .dashboard-status-row {
+    flex-wrap: wrap;
+  }
 }
 
+/* ============================================================
+   SMALL LAPTOP / TABLET
+   ============================================================ */
 
-/* =========================================================
-   MOBILE
-========================================================= */
-
-@media (max-width: 650px) {
-
+@media (max-width: 800px) {
   .dashboard-header {
-    position: relative;
+    padding: 0 14px;
+  }
 
-    min-height: auto;
+  .header-left {
+    gap: 10px;
+  }
 
-    padding: 10px 12px;
+  .brand-name {
+    font-size: 17px;
+  }
+
+  .brand-icon {
+    width: 39px;
+    height: 39px;
+  }
+
+  .connection-status {
+    padding: 5px 8px;
+    font-size: 10px;
+  }
+
+  .sos-header-button {
+    padding: 0 11px;
+  }
+
+  .sos-header-button span {
+    display: none;
+  }
+
+  .dashboard-content {
+    width: calc(100% - 24px);
+    padding-top: 18px;
+  }
+
+  .map-toolbar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .risk-control {
+    justify-content: flex-start;
+  }
+
+  .map-container {
+    height: 440px;
+    min-height: 360px;
+  }
+
+  .safe-havens-list {
+    grid-template-columns: 1fr;
+  }
+
+  .quick-dial-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dashboard-status-row {
+    gap: 11px 15px;
+  }
+}
+
+/* ============================================================
+   MOBILE
+   ============================================================ */
+
+@media (max-width: 600px) {
+  .dashboard-header {
+    min-height: 64px;
+    padding: 0 10px;
+    gap: 8px;
+  }
+
+  .header-left {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .mobile-menu-button {
+    width: 37px;
+    height: 37px;
+  }
+
+  .brand {
+    gap: 7px;
+  }
+
+  .brand-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 9px;
+  }
+
+  .brand-icon svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  .brand-name {
+    font-size: 15px;
+  }
+
+  .connection-status {
+    display: none;
+  }
+
+  .header-right {
+    gap: 6px;
+  }
+
+  .sos-header-button {
+    width: 39px;
+    height: 39px;
+    min-height: 39px;
+    padding: 0;
+    border-radius: 9px;
+  }
+
+  .profile-button {
+    width: 39px;
+    height: 39px;
+  }
+
+  .mobile-navigation {
+    display: block;
+  }
+
+  .dashboard-content {
+    width: calc(100% - 18px);
+    padding: 13px 0 25px;
+  }
+
+  .offline-banner {
+    align-items: flex-start;
+    flex-wrap: wrap;
+
+    font-size: 11px;
+  }
+
+  .offline-banner span {
+    min-width: 0;
+  }
+
+  .offline-banner button {
+    margin-left: auto;
+  }
+
+  .dashboard-error {
+    font-size: 11px;
+  }
+
+  .disaster-alert-banner {
+    align-items: flex-start;
+
+    padding: 12px;
+    gap: 10px;
+  }
+
+  .alert-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .alert-icon svg {
+    width: 26px;
+    height: 26px;
+  }
+
+  .alert-title {
+    font-size: 10px;
+  }
+
+  .alert-title strong {
+    font-size: 11px;
+  }
+
+  .alert-content p {
+    font-size: 10px;
+  }
+
+  .close-alert {
+    width: 29px;
+    height: 29px;
+  }
+
+  .map-section-card,
+  .safe-havens-card,
+  .quick-dial-section,
+  .weather-card {
+    border-radius: 12px;
+  }
+
+  .map-toolbar {
+    padding: 10px;
+  }
+
+  .map-switcher button {
+    min-width: 68px;
+  }
+
+  .risk-control {
+    gap: 8px;
+    font-size: 9px;
+  }
+
+  .map-container {
+    height: 390px;
+    min-height: 320px;
+  }
+
+  .map-legend {
+    left: 8px;
+    bottom: 8px;
+
+    min-width: 145px;
+    padding: 7px 8px;
+  }
+
+  .map-controls {
+    right: 8px;
+    bottom: 8px;
+  }
+
+  .map-controls button {
+    width: 33px;
+    height: 33px;
+  }
+
+  .section-heading {
+    margin-bottom: 11px;
+  }
+
+  .heading-title h2 {
+    font-size: 15px;
+  }
+
+  .heading-icon {
+    width: 32px;
+    height: 32px;
+  }
+
+  .shelter-card {
+    padding: 8px;
+  }
+
+  .shelter-image {
+    width: 68px;
+    height: 72px;
+  }
+
+  .shelter-bottom {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .direction-button {
+    width: 100%;
+  }
+
+  .quick-dial-section,
+  .weather-card {
+    padding: 13px;
+  }
+
+  .bottom-section-heading h2,
+  .weather-heading h2 {
+    font-size: 15px;
+  }
+
+  .quick-dial-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .emergency-card {
+    min-height: 100px;
+
+    padding: 10px;
 
     gap: 8px;
   }
 
-  .dashboard-brand {
-    flex: 1;
+  .emergency-icon {
+    width: 39px;
+    height: 39px;
   }
 
-  .brand-icon {
-    width: 37px;
-    height: 37px;
+  .emergency-icon svg {
+    width: 22px;
+    height: 22px;
+  }
 
+  .emergency-text strong {
     font-size: 20px;
   }
 
-  .brand-text h1 {
-    font-size: 16px;
+  .emergency-text span {
+    font-size: 9px;
   }
 
-  .brand-text span {
-    display: none;
-  }
-
-  .dashboard-header-right {
-    gap: 5px;
-  }
-
-  .connection-status {
-    padding: 6px 8px;
-
+  .emergency-text small {
     font-size: 8px;
   }
 
-  .header-notification-button {
-    width: 34px;
-    height: 34px;
-
-    font-size: 15px;
-  }
-
-  .header-sos-wrapper button,
-  .header-sos-wrapper .sos-button {
-    min-width: 75px !important;
-    min-height: 36px !important;
-
-    padding: 5px 8px !important;
-
-    font-size: 9px !important;
-  }
-
-  .dashboard-content {
-    width: calc(100% - 20px);
-
-    padding-top: 10px;
-  }
-
-  .top-disaster-alert {
+  .weather-heading {
     align-items: flex-start;
-
-    padding: 10px;
-
-    gap: 9px;
   }
 
-  .top-alert-icon {
-    width: 35px;
-    height: 35px;
-
-    font-size: 18px;
+  .weather-heading > span {
+    white-space: normal;
+    text-align: right;
   }
 
-  .top-alert-title-row h2 {
-    font-size: 11px;
-  }
-
-  .top-alert-title-row span {
-    font-size: 10px;
-  }
-
-  .top-alert-content p {
-    font-size: 9px;
-  }
-
-  .top-alert-status {
-    display: none;
-  }
-
-  .primary-dashboard-grid {
+  .weather-main {
     gap: 10px;
   }
 
-  .map-card {
-    padding: 7px;
+  .weather-icon {
+    width: 65px;
+    height: 65px;
   }
 
-  .map-card-header {
-    padding: 4px 4px 8px;
+  .weather-icon svg {
+    width: 42px;
+    height: 42px;
   }
 
-  .map-card-header h2 {
-    font-size: 15px;
+  .weather-temperature strong {
+    font-size: 30px;
   }
 
-  .map-card-header p {
+  .weather-details {
+    gap: 4px;
+  }
+
+  .weather-detail {
+    column-gap: 4px;
+  }
+
+  .weather-detail svg {
+    width: 17px;
+    height: 17px;
+  }
+
+  .weather-detail span {
+    font-size: 8px;
+  }
+
+  .weather-detail strong {
     font-size: 9px;
   }
 
-  .map-header-actions {
-    display: none;
-  }
+  .dashboard-status-row {
+    align-items: flex-start;
+    flex-direction: column;
 
-  .map-container {
-    min-height: 420px;
-  }
-
-  .safe-havens-card {
     padding: 11px;
   }
 
-  .safe-havens-header h2 {
-    font-size: 15px;
+  .status-item {
+    white-space: normal;
+    font-size: 10px;
   }
 
-  .safe-haven-card {
-    grid-template-columns:
-      58px
-      minmax(0, 1fr);
-  }
-
-  .safe-haven-image {
-    width: 58px;
-    height: 58px;
-
-    font-size: 24px;
-  }
-
-  .safe-haven-title-row h3 {
-    font-size: 12px;
-  }
-
-  .safe-haven-direction-button {
+  .refresh-dashboard-button {
     width: 100%;
 
-    justify-content: center;
+    margin-left: 0;
   }
-
-  .emergency-dial-grid {
-    grid-template-columns:
-      repeat(2, 1fr);
-  }
-
-  .emergency-dial-card {
-    min-height: 82px;
-  }
-
-  .weather-card,
-  .emergency-dial-section,
-  .safety-guidance-card,
-  .location-card,
-  .offline-map-section {
-    padding: 12px;
-  }
-
-  .weather-main-display strong {
-    font-size: 28px;
-  }
-
-  .location-card {
-    flex-wrap: wrap;
-  }
-
-  .location-info {
-    min-width: 180px;
-  }
-
-  .location-status {
-    margin-left: 49px;
-  }
-
-  .map-button {
-    margin-left: auto;
-  }
-
-  .offline-map-container {
-    min-height: 420px;
-  }
-
 }
 
+/* ============================================================
+   VERY SMALL PHONES
+   ============================================================ */
 
-/* =========================================================
-   SMALL MOBILE
-========================================================= */
+@media (max-width: 400px) {
+  .brand-name {
+    font-size: 14px;
+  }
 
-@media (max-width: 430px) {
+  .quick-dial-grid {
+    grid-template-columns: 1fr;
+  }
 
-  .dashboard-header-right .connection-status {
+  .emergency-card {
+    min-height: 88px;
+  }
+
+  .map-container {
+    height: 350px;
+  }
+
+  .map-legend {
     display: none;
   }
 
-  .header-sos-wrapper button,
-  .header-sos-wrapper .sos-button {
-    min-width: 70px !important;
-  }
-
-  .top-alert-title-row {
-    display: block;
-  }
-
-  .top-alert-title-row span {
-    display: inline;
-  }
-
-  .emergency-dial-card {
-    padding: 9px;
-  }
-
-  .emergency-dial-card strong {
-    font-size: 22px;
-  }
-
-  .emergency-dial-card .dial-icon {
-    width: 34px;
-    height: 34px;
-  }
-
-  .safe-havens-footer {
+  .risk-control {
+    align-items: flex-start;
     flex-direction: column;
   }
 
-  .location-status {
-    margin-left: 0;
+  .weather-details {
+    grid-template-columns: 1fr;
+    gap: 8px;
   }
 
-  .map-button {
-    width: 100%;
-    margin-left: 0;
+  .weather-detail {
+    display: flex;
+    align-items: center;
+    gap: 7px;
   }
 
+  .weather-detail strong {
+    margin-left: auto;
+  }
 }
