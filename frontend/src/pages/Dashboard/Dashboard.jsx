@@ -1242,6 +1242,9 @@ export default function Dashboard() {
       "\\n\\n" +
       "Please contact me immediately. This is an emergency.";
 
+    const firstEmergencyContact =
+      emergencyContacts?.[0];
+
     const payload = {
       latitude,
       longitude,
@@ -1291,9 +1294,6 @@ export default function Dashboard() {
         );
       }
 
-      const firstEmergencyContact =
-        emergencyContacts?.[0];
-
       if (
         firstEmergencyContact &&
         firstEmergencyContact.phone
@@ -1338,9 +1338,6 @@ export default function Dashboard() {
         "pendingSOSRequests",
         pendingSOS
       );
-
-      const firstEmergencyContact =
-        emergencyContacts?.[0];
 
       if (
         firstEmergencyContact &&
