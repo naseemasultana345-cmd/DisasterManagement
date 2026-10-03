@@ -1097,6 +1097,13 @@ export default function Dashboard() {
         return;
       }
 
+      if (!online) {
+        window.alert(
+          "Internet connection is unavailable. Google Maps directions cannot be opened offline."
+        );
+        return;
+      }
+
       if (
         shelter.latitude !== null &&
         shelter.longitude !== null
@@ -1145,7 +1152,7 @@ export default function Dashboard() {
         );
       }
     },
-    [location]
+    [location, online]
   );
 
   // ==========================================================
