@@ -608,6 +608,9 @@ export default function Dashboard() {
   const [sosPressed, setSosPressed] =
     useState(false);
 
+  const [sosCountdown, setSosCountdown] =
+    useState(null);
+
   const [showAlert, setShowAlert] =
     useState(true);
 
@@ -632,6 +635,7 @@ export default function Dashboard() {
     useState("");
 
   const sosTimerRef = useRef(null);
+  const sosCountdownRef = useRef(null);
 
   // ==========================================================
   // USER
@@ -816,10 +820,10 @@ export default function Dashboard() {
           location?.longitude !== undefined
         ) {
           url +=
-            `?lat=${encodeURIComponent(
+            `?latitude=${encodeURIComponent(
               location.latitude
             )}` +
-            `&lon=${encodeURIComponent(
+            `&longitude=${encodeURIComponent(
               location.longitude
             )}`;
         }
@@ -1247,15 +1251,37 @@ export default function Dashboard() {
   };
 
   const startSOS = () => {
-    if (sosLoading) {
+    if (sosLoading || sosCountdown !== null) {
       return;
     }
 
     setSosPressed(true);
 
     sosTimerRef.current = setTimeout(() => {
-      submitSOS();
-    }, 1500);
+      sosTimerRef.current = null;
+
+      setSosPressed(false);
+      setSosCountdown(5);
+
+      sosCountdownRef.current = setInterval(() => {
+        setSosCountdown((current) => {
+          if (current === null) {
+            return null;
+          }
+
+          if (current <= 1) {
+            clearInterval(sosCountdownRef.current);
+            sosCountdownRef.current = null;
+
+            submitSOS();
+
+            return null;
+          }
+
+          return current - 1;
+        });
+      }, 1000);
+    }, 2500);
   };
 
   const cancelSOS = () => {
@@ -1267,10 +1293,24 @@ export default function Dashboard() {
     setSosPressed(false);
   };
 
+  const cancelSOSCountdown = () => {
+    if (sosCountdownRef.current) {
+      clearInterval(sosCountdownRef.current);
+      sosCountdownRef.current = null;
+    }
+
+    setSosCountdown(null);
+    setSosPressed(false);
+  };
+
   useEffect(() => {
     return () => {
       if (sosTimerRef.current) {
         clearTimeout(sosTimerRef.current);
+      }
+
+      if (sosCountdownRef.current) {
+        clearInterval(sosCountdownRef.current);
       }
     };
   }, []);
@@ -1436,6 +1476,36 @@ export default function Dashboard() {
 
   return (
     <div className="dashboard-page">
+      {sosCountdown !== null && (
+        <div className="sos-countdown-overlay">
+          <div className="sos-countdown-card">
+            <div className="sos-countdown-icon">
+              <Radio size={34} />
+            </div>
+
+            <h2>SOS ACTIVATION</h2>
+
+            <p>
+              Emergency SOS will be sent
+              automatically when the countdown
+              reaches zero.
+            </p>
+
+            <div className="sos-countdown-number">
+              {sosCountdown}
+            </div>
+
+            <button
+              type="button"
+              className="sos-countdown-cancel"
+              onClick={cancelSOSCountdown}
+            >
+              CANCEL
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* HEADER */}
 
       <header className="dashboard-header">
@@ -1542,22 +1612,40 @@ export default function Dashboard() {
           <button
             className={`sos-header-button ${
               sosPressed ? "pressed" : ""
+            } ${
+              sosCountdown !== null
+                ? "countdown-active"
+                : ""
             }`}
             onMouseDown={startSOS}
-            onMouseUp={cancelSOS}
-            onMouseLeave={cancelSOS}
+            onMouseUp={() => {
+              if (sosCountdown === null) {
+                cancelSOS();
+              }
+            }}
+            onMouseLeave={() => {
+              if (sosCountdown === null) {
+                cancelSOS();
+              }
+            }}
             onTouchStart={startSOS}
-            onTouchEnd={cancelSOS}
+            onTouchEnd={() => {
+              if (sosCountdown === null) {
+                cancelSOS();
+              }
+            }}
             disabled={sosLoading}
-            title="Hold for 1.5 seconds to send SOS"
+            title="Hold for 2.5 seconds to start SOS countdown"
           >
             <Radio size={21} />
 
             <span>
               {sosLoading
                 ? "Sending SOS..."
+                : sosCountdown !== null
+                ? `SOS in ${sosCountdown}s`
                 : sosPressed
-                ? "Release to Cancel"
+                ? "Keep Holding..."
                 : "Hold for SOS"}
             </span>
           </button>
