@@ -7,7 +7,6 @@ import {
 
 import {
   MapContainer,
-  TileLayer,
   Marker,
   Popup,
   Circle,
@@ -1130,60 +1129,114 @@ function getTilesAroundLocation(
 // OFFLINE TILE LAYER
 // =====================================================
 
+const CachedLeafletTileLayer = L.TileLayer.extend({
+
+  createTile(coords, done) {
+
+    const tile = document.createElement("img");
+
+    tile.alt = "";
+    tile.setAttribute("role", "presentation");
+    tile.width = this.options.tileSize;
+    tile.height = this.options.tileSize;
+
+    if (this.options.crossOrigin) {
+      tile.crossOrigin = "anonymous";
+    }
+
+    const tileUrl = L.Util.template(
+      TILE_URL,
+      coords
+    );
+
+    const finishWithError = (error) => {
+      console.warn(
+        "Cached map tile could not be loaded:",
+        tileUrl,
+        error
+      );
+      done(error, tile);
+    };
+
+    if (!this.options.offlineMode) {
+      tile.onload = () => done(null, tile);
+      tile.onerror = (error) => finishWithError(error);
+      tile.src = tileUrl;
+      return tile;
+    }
+
+    if (!("caches" in window)) {
+      finishWithError(
+        new Error("Cache API is not supported.")
+      );
+      return tile;
+    }
+
+    caches
+      .open(TILE_CACHE_NAME)
+      .then((cache) => cache.match(tileUrl))
+      .then(async (response) => {
+        if (!response) {
+          throw new Error("Tile is not available offline.");
+        }
+
+        const blob = await response.blob();
+        const objectUrl = URL.createObjectURL(blob);
+
+        tile.onload = () => {
+          URL.revokeObjectURL(objectUrl);
+          done(null, tile);
+        };
+
+        tile.onerror = (error) => {
+          URL.revokeObjectURL(objectUrl);
+          finishWithError(error);
+        };
+
+        tile.src = objectUrl;
+      })
+      .catch(finishWithError);
+
+    return tile;
+  },
+});
+
 function CachedTileLayer({
   offlineMode,
   isOnline,
 }) {
 
-  return (
+  const map = useMap();
 
-    <TileLayer
+  useEffect(() => {
 
-      key={
-        offlineMode
-          ? "offline-tile-layer"
-          : "online-tile-layer"
+    const layer = new CachedLeafletTileLayer(
+      TILE_URL,
+      {
+      attribution:
+        "&copy; OpenStreetMap contributors",
+      maxZoom: 18,
+      tileSize: 256,
+      keepBuffer: 2,
+      crossOrigin: true,
+      offlineMode:
+        !isOnline || offlineMode,
       }
+    );
 
-      attribution="&copy; OpenStreetMap contributors"
+    layer.addTo(map);
 
-      url={
-        TILE_URL
-      }
+    return () => {
+      map.removeLayer(layer);
+    };
 
-      maxZoom={
-        18
-      }
+  }, [
+    map,
+    offlineMode,
+    isOnline,
+  ]);
 
-      tileSize={
-        256
-      }
-
-      keepBuffer={
-        2
-      }
-
-      crossOrigin={
-        true
-      }
-
-      eventHandlers={{
-
-        tileerror:
-          (event) => {
-
-            console.warn(
-              "Map tile could not be loaded:",
-              event
-            );
-
-          },
-
-      }}
-
-    />
-
-  );
+  return null;
 }
 
 // =====================================================
