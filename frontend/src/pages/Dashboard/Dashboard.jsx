@@ -644,6 +644,9 @@ export default function Dashboard() {
   const [mapMode, setMapMode] =
     useState("map");
 
+  const [offlineMode, setOfflineMode] =
+    useState(false);
+
   const [selectedShelter, setSelectedShelter] =
     useState(null);
 
@@ -663,6 +666,14 @@ export default function Dashboard() {
     if (currentUser) {
       setUser(currentUser);
     }
+  }, []);
+
+  // ==========================================================
+  // RESET DASHBOARD SCROLL POSITION
+  // ==========================================================
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
   }, []);
 
   // ==========================================================
@@ -2267,9 +2278,10 @@ export default function Dashboard() {
                       ? "active"
                       : ""
                   }
-                  onClick={() =>
-                    setMapMode("map")
-                  }
+                  onClick={() => {
+                    setMapMode("map");
+                    setOfflineMode(false);
+                  }}
                 >
                   Map
                 </button>
@@ -2280,11 +2292,26 @@ export default function Dashboard() {
                       ? "active"
                       : ""
                   }
-                  onClick={() =>
-                    setMapMode("satellite")
-                  }
+                  onClick={() => {
+                    setMapMode("satellite");
+                    setOfflineMode(false);
+                  }}
                 >
                   Satellite
+                </button>
+
+                <button
+                  className={
+                    offlineMode
+                      ? "active"
+                      : ""
+                  }
+                  onClick={() => {
+                    setMapMode("map");
+                    setOfflineMode(true);
+                  }}
+                >
+                  Offline Map
                 </button>
               </div>
 
@@ -2341,6 +2368,7 @@ export default function Dashboard() {
                   null
                 }
                 mapMode={mapMode}
+                offlineMode={offlineMode}
                 online={online}
                 maxDistanceKm={
                   MAX_DISTANCE_KM

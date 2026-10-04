@@ -26,6 +26,9 @@ import "./DisasterMap.css";
 const TILE_URL =
   "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
 
+const SATELLITE_TILE_URL =
+  "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
+
 const TILE_CACHE_NAME =
   "disaster-map-tiles-v2";
 
@@ -1145,7 +1148,7 @@ const CachedLeafletTileLayer = L.TileLayer.extend({
     }
 
     const tileUrl = L.Util.template(
-      TILE_URL,
+      this.options.tileUrl,
       coords
     );
 
@@ -1204,23 +1207,32 @@ const CachedLeafletTileLayer = L.TileLayer.extend({
 function CachedTileLayer({
   offlineMode,
   isOnline,
+  mapMode,
 }) {
 
   const map = useMap();
 
+  const tileUrl =
+    mapMode === "satellite"
+      ? SATELLITE_TILE_URL
+      : TILE_URL;
+
   useEffect(() => {
 
     const layer = new CachedLeafletTileLayer(
-      TILE_URL,
+      tileUrl,
       {
       attribution:
-        "&copy; OpenStreetMap contributors",
+        mapMode === "satellite"
+          ? "Tiles &copy; Esri"
+          : "&copy; OpenStreetMap contributors",
       maxZoom: 18,
       tileSize: 256,
       keepBuffer: 2,
       crossOrigin: true,
       offlineMode:
-        !isOnline || offlineMode,
+        mapMode === "map" &&
+        (!isOnline || offlineMode),
       }
     );
 
@@ -1234,6 +1246,8 @@ function CachedTileLayer({
     map,
     offlineMode,
     isOnline,
+    tileUrl,
+    mapMode,
   ]);
 
   return null;
@@ -1305,6 +1319,8 @@ function DisasterMap({
   policeServices = [],
 
   weatherCondition = null,
+
+  mapMode = "map",
 
   selectedShelter,
 
@@ -2912,16 +2928,6 @@ function DisasterMap({
 
         <MapContainer
 
-          key={
-            offlineMode
-              ? `offline-${
-                  selectedShelter?.id ??
-                  selectedShelter?.name ??
-                  "map"
-                }`
-              : "main-map"
-          }
-
           center={
 
             offlineMode &&
@@ -2965,6 +2971,10 @@ function DisasterMap({
 
             isOnline={
               isOnline
+            }
+
+            mapMode={
+              mapMode
             }
 
           />
