@@ -650,6 +650,9 @@ export default function Dashboard() {
   const [selectedShelter, setSelectedShelter] =
     useState(null);
 
+  const [showMapLegend, setShowMapLegend] =
+    useState(false);
+
   const [errorMessage, setErrorMessage] =
     useState("");
 
@@ -2271,50 +2274,6 @@ export default function Dashboard() {
 
           <div className="map-section-card">
             <div className="map-toolbar">
-              <div className="map-switcher">
-                <button
-                  className={
-                    mapMode === "map"
-                      ? "active"
-                      : ""
-                  }
-                  onClick={() => {
-                    setMapMode("map");
-                    setOfflineMode(false);
-                  }}
-                >
-                  Map
-                </button>
-
-                <button
-                  className={
-                    mapMode === "satellite"
-                      ? "active"
-                      : ""
-                  }
-                  onClick={() => {
-                    setMapMode("satellite");
-                    setOfflineMode(false);
-                  }}
-                >
-                  Satellite
-                </button>
-
-                <button
-                  className={
-                    offlineMode
-                      ? "active"
-                      : ""
-                  }
-                  onClick={() => {
-                    setMapMode("map");
-                    setOfflineMode(true);
-                  }}
-                >
-                  Offline Map
-                </button>
-              </div>
-
               <div className="risk-control">
                 <label>
                   <input
@@ -2357,7 +2316,7 @@ export default function Dashboard() {
                 selectedShelter={
                   selectedShelter
                 }
-                onShelterSelect={
+                onShelterClick={
                   setSelectedShelter
                 }
                 weather={weather}
@@ -2368,6 +2327,8 @@ export default function Dashboard() {
                   null
                 }
                 mapMode={mapMode}
+                onMapModeChange={setMapMode}
+                onOfflineModeChange={setOfflineMode}
                 offlineMode={offlineMode}
                 online={online}
                 maxDistanceKm={
@@ -2375,45 +2336,78 @@ export default function Dashboard() {
                 }
               />
 
-              <div className="map-legend">
-                <div className="legend-item">
-                  <span className="legend-dot location" />
-                  <span>
-                    Your Location
-                  </span>
+              <button
+                type="button"
+                className={`map-legend-toggle ${
+                  showMapLegend ? "active" : ""
+                }`}
+                onClick={() =>
+                  setShowMapLegend((value) => !value)
+                }
+                aria-label={
+                  showMapLegend
+                    ? "Hide map legend"
+                    : "Show map legend"
+                }
+                aria-expanded={showMapLegend}
+              >
+                <span>Legend</span>
+                <span className="map-legend-toggle-icon">
+                  {showMapLegend ? "−" : "+"}
+                </span>
+              </button>
+
+              {showMapLegend && (
+                <div className="map-legend">
+                  <div className="legend-item">
+                    <span className="legend-dot location" />
+                    <span>
+                      Your Location
+                    </span>
+                  </div>
+
+                  <div className="legend-item">
+                    <span className="legend-shelter">
+                      <Home size={11} />
+                    </span>
+
+                    <span>
+                      Safe Shelter
+                    </span>
+                  </div>
+
+                  <div className="legend-item">
+                    <span className="legend-hospital">
+                      ✚
+                    </span>
+
+                    <span>
+                      Hospital
+                    </span>
+                  </div>
+
+                  <div className="legend-item">
+                    <span className="legend-risk" />
+
+                    <span>
+                      Flood Risk Zone
+                    </span>
+                  </div>
+
+                  <div className="legend-item">
+                    <span className="legend-road" />
+
+                    <span>
+                      Major Road
+                    </span>
+                  </div>
+
+                  <div className="map-scale">
+                    <span />
+                    <small>2 km</small>
+                  </div>
                 </div>
-
-                <div className="legend-item">
-                  <span className="legend-shelter">
-                    <Home size={11} />
-                  </span>
-
-                  <span>
-                    Safe Shelter
-                  </span>
-                </div>
-
-                <div className="legend-item">
-                  <span className="legend-risk" />
-
-                  <span>
-                    Flood Risk Zone
-                  </span>
-                </div>
-
-                <div className="legend-item">
-                  <span className="legend-road" />
-
-                  <span>
-                    Major Road
-                  </span>
-                </div>
-
-                <div className="map-scale">
-                  <span />
-                  <small>2 km</small>
-                </div>
-              </div>
+              )}
 
               <div className="map-controls">
                 <button
@@ -2510,6 +2504,9 @@ export default function Dashboard() {
                           : ""
                       }`}
                       key={shelter.id}
+                      onClick={() =>
+                        setSelectedShelter(shelter)
+                      }
                     >
                       <div className="shelter-image">
                         {shelter.image ? (

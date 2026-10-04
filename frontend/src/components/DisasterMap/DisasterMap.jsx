@@ -14,7 +14,11 @@ import {
   useMap,
 } from "react-leaflet";
 
+import MarkerClusterGroup from "react-leaflet-cluster";
+
 import L from "leaflet";
+
+import { Download } from "lucide-react";
 
 import "leaflet/dist/leaflet.css";
 import "./DisasterMap.css";
@@ -24,7 +28,7 @@ import "./DisasterMap.css";
 // =====================================================
 
 const TILE_URL =
-  "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
+  "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
 
 const SATELLITE_TILE_URL =
   "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
@@ -63,7 +67,7 @@ const userIcon = L.divIcon({
 
   html: `
     <div class="user-location-marker">
-      📍
+      <span></span>
     </div>
   `,
 
@@ -96,6 +100,38 @@ const shelterIcon = L.divIcon({
   html: `
     <div class="shelter-location-marker">
       🏠
+    </div>
+  `,
+
+  iconSize: [
+    42,
+    42,
+  ],
+
+  iconAnchor: [
+    21,
+    42,
+  ],
+
+  popupAnchor: [
+    0,
+    -42,
+  ],
+
+});
+
+// =====================================================
+// HOSPITAL ICON
+// =====================================================
+
+const hospitalIcon = L.divIcon({
+
+  className:
+    "custom-map-icon",
+
+  html: `
+    <div class="hospital-location-marker">
+      ✚
     </div>
   `,
 
@@ -221,10 +257,15 @@ const policeServiceIcon =
 function MapController({
   location,
   offlineMode,
+  shelters,
+  selectedShelter,
 }) {
 
   const map =
     useMap();
+
+  const hasFittedInitialView =
+    useRef(false);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -261,16 +302,120 @@ function MapController({
       return;
     }
 
+    if (
+      selectedShelter &&
+      selectedShelter.latitude != null &&
+      selectedShelter.longitude != null
+    ) {
+      const selectedLatitude =
+        Number(
+          selectedShelter.latitude
+        );
+
+      const selectedLongitude =
+        Number(
+          selectedShelter.longitude
+        );
+
+      if (
+        !Number.isNaN(
+          selectedLatitude
+        ) &&
+        !Number.isNaN(
+          selectedLongitude
+        )
+      ) {
+        map.flyTo(
+          [
+            selectedLatitude,
+            selectedLongitude,
+          ],
+          offlineMode ? 16 : 15,
+          {
+            duration: 1.2,
+          }
+        );
+
+        return;
+      }
+    }
+
+    if (!hasFittedInitialView.current) {
+
+      const points = [
+        [
+          latitude,
+          longitude,
+        ],
+      ];
+
+      (shelters || []).forEach(
+        (shelter) => {
+          const shelterLatitude =
+            Number(
+              shelter.latitude
+            );
+
+          const shelterLongitude =
+            Number(
+              shelter.longitude
+            );
+
+          if (
+            !Number.isNaN(
+              shelterLatitude
+            ) &&
+            !Number.isNaN(
+              shelterLongitude
+            )
+          ) {
+            points.push([
+              shelterLatitude,
+              shelterLongitude,
+            ]);
+          }
+        }
+      );
+
+      if (points.length > 1) {
+        map.fitBounds(
+          L.latLngBounds(points),
+          {
+            padding: [
+              45,
+              45,
+            ],
+            maxZoom: offlineMode
+              ? 16
+              : 15,
+            animate: true,
+          }
+        );
+      } else {
+        map.flyTo(
+          [
+            latitude,
+            longitude,
+          ],
+          offlineMode ? 16 : 15,
+          {
+            duration: 1.2,
+          }
+        );
+      }
+
+      hasFittedInitialView.current =
+        true;
+
+      return;
+    }
+
     map.flyTo(
       [
         latitude,
         longitude,
       ],
-
-      offlineMode
-        ? 16
-        : 15,
-
+      offlineMode ? 16 : 15,
       {
         duration: 1.2,
       }
@@ -280,6 +425,8 @@ function MapController({
     location,
     map,
     offlineMode,
+    shelters,
+    selectedShelter,
   ]);
 
   return null;
@@ -1321,6 +1468,10 @@ function DisasterMap({
   weatherCondition = null,
 
   mapMode = "map",
+
+  onMapModeChange,
+
+  onOfflineModeChange,
 
   selectedShelter,
 
@@ -2381,7 +2532,13 @@ function DisasterMap({
         shelter.latitude !=
           null &&
         shelter.longitude !=
-          null
+          null &&
+        String(
+          shelter?.type || ""
+        )
+          .trim()
+          .toLowerCase() !==
+        "hospital"
     );
 
   // ===================================================
@@ -2519,10 +2676,76 @@ function DisasterMap({
     >
 
       {/* =============================================
-          MAP HEADER
+          COMPACT MAP TOOLBAR
       ============================================== */}
 
-      <div className="map-top-controls">
+      <div className="map-compact-toolbar">
+
+        <div className="map-switcher map-compact-switcher">
+
+          <button
+            type="button"
+            className={
+              mapMode === "map" && !offlineMode
+                ? "active"
+                : ""
+            }
+            onClick={() => {
+              if (onMapModeChange) {
+                onMapModeChange("map");
+              }
+
+              if (onOfflineModeChange) {
+                onOfflineModeChange(false);
+              }
+            }}
+          >
+            Map
+          </button>
+
+          <button
+            type="button"
+            className={
+              mapMode === "satellite" && !offlineMode
+                ? "active"
+                : ""
+            }
+            onClick={() => {
+              if (onMapModeChange) {
+                onMapModeChange("satellite");
+              }
+
+              if (onOfflineModeChange) {
+                onOfflineModeChange(false);
+              }
+            }}
+          >
+            Satellite
+          </button>
+
+          <button
+            type="button"
+            className={
+              offlineMode
+                ? "active"
+                : ""
+            }
+            onClick={() => {
+              if (onMapModeChange) {
+                onMapModeChange("map");
+              }
+
+              if (onOfflineModeChange) {
+                onOfflineModeChange(true);
+              }
+            }}
+          >
+            Offline Map
+          </button>
+
+        </div>
+
+        <div className="map-toolbar-divider"></div>
 
         <div
           className={`map-status ${
@@ -2534,7 +2757,49 @@ function DisasterMap({
 
           <span className="status-dot"></span>
 
-          {mapStatusText}
+          <span>
+            {mapStatusText}
+          </span>
+
+        </div>
+
+        <div className="map-toolbar-divider"></div>
+
+        <div className="map-toolbar-range">
+
+          <span className="map-toolbar-range-icon">
+            📏
+          </span>
+
+          <span>
+            <strong>2 KM</strong>
+            {" "}
+            safety range
+          </span>
+
+        </div>
+
+        <div className="map-toolbar-divider"></div>
+
+        <div className="map-toolbar-weather">
+
+          <span className="map-toolbar-weather-icon">
+            {weatherCondition ===
+            "Heavy Rain"
+              ? "🌧️"
+              : weatherCondition ===
+                "Extreme Heat"
+              ? "☀️"
+              : weatherCondition ===
+                "Thunderstorm"
+              ? "⛈️"
+              : "🌤️"}
+          </span>
+
+          <span>
+            {weatherCondition ||
+              "Weather unavailable"}
+          </span>
 
         </div>
 
@@ -2553,12 +2818,14 @@ function DisasterMap({
             }
           >
 
+            <span className="map-download-icon">
+              <Download size={14} strokeWidth={2.4} />
+            </span>
+
             {downloadState ===
             "downloading"
-
-              ? `⬇️ Downloading ${downloadProgress}%`
-
-              : "⬇️ Download 2 KM Offline Map"}
+              ? `Downloading ${downloadProgress}%`
+              : "Download 2 KM"}
 
           </button>
 
@@ -2662,61 +2929,6 @@ function DisasterMap({
         </div>
 
       )}
-
-      {/* =============================================
-          2 KM RANGE
-      ============================================== */}
-
-      <div className="offline-location-info">
-
-        <div>
-
-          📏{" "}
-          <strong>
-            Safety range
-          </strong>
-
-        </div>
-
-        <span>
-          Locations shown within 2 KM
-        </span>
-
-      </div>
-
-      {/* =============================================
-          WEATHER SERVICE INFORMATION
-      ============================================== */}
-
-      <div className="weather-service-info">
-
-        <div className="weather-service-icon">
-          {weatherCondition ===
-          "Heavy Rain"
-            ? "🌧️"
-            : weatherCondition ===
-              "Extreme Heat"
-            ? "☀️"
-            : weatherCondition ===
-              "Thunderstorm"
-            ? "⛈️"
-            : "🌤️"}
-        </div>
-
-        <div>
-
-          <strong>
-            Services for current conditions
-          </strong>
-
-          <span>
-            {weatherCondition ||
-              "Weather unavailable"}
-          </span>
-
-        </div>
-
-      </div>
 
       {/* =============================================
           ROUTE LOADING
@@ -2928,6 +3140,8 @@ function DisasterMap({
 
         <MapContainer
 
+          zoomControl={false}
+
           center={
 
             offlineMode &&
@@ -2989,14 +3203,19 @@ function DisasterMap({
           <MapController
 
             location={
-              offlineMode &&
-              selectedShelter
-                ? selectedShelter
-                : userLocation
+              userLocation
             }
 
             offlineMode={
               offlineMode
+            }
+
+            shelters={
+              validShelters
+            }
+
+            selectedShelter={
+              selectedShelter
             }
 
           />
@@ -3078,11 +3297,12 @@ function DisasterMap({
               SAFEST LOCATIONS
           ========================================== */}
 
-          {validSafestLocations.map(
-            (
-              location,
-              index
-            ) => {
+          <MarkerClusterGroup>
+            {validSafestLocations.map(
+              (
+                location,
+                index
+              ) => {
 
               const locationId =
                 location.id ??
@@ -3226,17 +3446,132 @@ function DisasterMap({
 
             }
 
-          )}
+            )}
+          </MarkerClusterGroup>
+
+          {/* =========================================
+              HOSPITAL LOCATIONS
+          ========================================== */}
+
+          <MarkerClusterGroup>
+            {validHospitalLocations.map(
+              (
+                hospital,
+                index
+              ) => {
+
+              const hospitalId =
+                hospital.id ??
+                `hospital-${index}`;
+
+              const distanceKm =
+                getDistanceFromUser(
+                  userLocation,
+                  hospital
+                );
+
+              return (
+
+                <Marker
+
+                  key={
+                    `hospital-${hospitalId}`
+                  }
+
+                  position={[
+
+                    Number(
+                      hospital.latitude
+                    ),
+
+                    Number(
+                      hospital.longitude
+                    ),
+
+                  ]}
+
+                  icon={
+                    hospitalIcon
+                  }
+
+                  eventHandlers={{
+
+                    click:
+                      () => {
+
+                        if (
+                          onShelterClick
+                        ) {
+
+                          onShelterClick(
+                            hospital
+                          );
+
+                        }
+
+                      },
+
+                  }}
+
+                >
+
+                  <Popup>
+
+                    <div className="map-popup">
+
+                      <strong>
+
+                        ✚{" "}
+
+                        {hospital.name ||
+                          hospital.locationName ||
+                          "Hospital"}
+
+                      </strong>
+
+                      {hospital.address && (
+
+                        <>
+                          <br />
+                          {hospital.address}
+                        </>
+
+                      )}
+
+                      <br />
+
+                      📏 Distance from you:
+                      {" "}
+
+                      <strong>
+                        {formatDistance(
+                          distanceKm
+                        )}
+                      </strong>
+
+                    </div>
+
+                  </Popup>
+
+                </Marker>
+
+              );
+
+            }
+
+            )}
+          </MarkerClusterGroup>
 
           {/* =========================================
               NORMAL SAFE LOCATIONS
           ========================================== */}
 
-          {validShelters.map(
-            (
-              shelter,
-              index
-            ) => {
+          <MarkerClusterGroup>
+            {validShelters.map(
+              (
+                shelter,
+                index
+              ) => {
 
               const shelterId =
                 shelter.id ??
@@ -3349,18 +3684,20 @@ function DisasterMap({
 
             }
 
-          )}
+            )}
+          </MarkerClusterGroup>
 
           {/* =========================================
               FOOD SERVICES
           ========================================== */}
 
-          {showFoodServices &&
-            validFoodServices.map(
-              (
-                service,
-                index
-              ) => {
+          {showFoodServices && (
+            <MarkerClusterGroup>
+              {validFoodServices.map(
+                (
+                  service,
+                  index
+                ) => {
 
                 const serviceId =
                   service.id ??
@@ -3481,19 +3818,22 @@ function DisasterMap({
 
                 );
 
-              }
-            )}
+                }
+              )}
+            </MarkerClusterGroup>
+          )}
 
           {/* =========================================
               POLICE SERVICES
           ========================================== */}
 
-          {showPoliceServices &&
-            validPoliceServices.map(
-              (
-                service,
-                index
-              ) => {
+          {showPoliceServices && (
+            <MarkerClusterGroup>
+              {validPoliceServices.map(
+                (
+                  service,
+                  index
+                ) => {
 
                 const serviceId =
                   service.id ??
@@ -3614,8 +3954,10 @@ function DisasterMap({
 
                 );
 
-              }
-            )}
+                }
+              )}
+            </MarkerClusterGroup>
+          )}
 
           {/* =========================================
               ACTUAL ROAD ROUTE

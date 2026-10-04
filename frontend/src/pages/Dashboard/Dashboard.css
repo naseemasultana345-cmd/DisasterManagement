@@ -2854,3 +2854,109 @@
     width: 240px;
   }
 }
+
+/* ==========================================================
+   COLLAPSIBLE MAP LEGEND
+========================================================== */
+
+.map-legend-toggle {
+  position: absolute;
+  left: 14px;
+  bottom: 14px;
+  z-index: 21;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 32px;
+  padding: 6px 9px;
+  border: 1px solid rgba(218, 224, 231, 0.95);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.96);
+  color: #4f5968;
+  box-shadow: 0 5px 15px rgba(15, 23, 42, 0.12);
+  backdrop-filter: blur(5px);
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.map-legend-toggle:hover {
+  background: #ffffff;
+}
+
+.map-legend-toggle.active {
+  border-bottom-left-radius: 6px;
+  border-bottom-right-radius: 6px;
+}
+
+.map-legend-toggle-icon {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.map-legend-toggle + .map-legend {
+  left: 14px;
+  bottom: 53px;
+}
+
+@media (max-width: 768px) {
+  .map-legend-toggle {
+    left: 8px;
+    bottom: 8px;
+  }
+
+  .map-legend-toggle + .map-legend {
+    left: 8px;
+    bottom: 47px;
+  }
+}
+
+/* ==========================================================
+   HOSPITAL MAP LEGEND
+========================================================== */
+
+.legend-hospital {
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #e53935;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+/* ==========================================================
+   COMPACT MAP RISK STRIP
+   Keep the existing Live Flood Risk control without creating
+   a second large toolbar.
+========================================================== */
+
+.map-section-card > .map-toolbar {
+  min-height: 38px;
+  padding: 6px 10px;
+  justify-content: flex-end;
+  border-bottom: 1px solid #e8ebef;
+}
+
+.map-section-card > .map-toolbar .risk-control {
+  gap: 10px;
+  font-size: 10px;
+}
+
+@media (max-width: 768px) {
+  .map-section-card > .map-toolbar {
+    min-height: 36px;
+    padding: 5px 8px;
+  }
+
+  .map-section-card > .map-toolbar .risk-control {
+    gap: 7px;
+    overflow-x: auto;
+    justify-content: flex-start;
+    width: 100%;
+  }
+}

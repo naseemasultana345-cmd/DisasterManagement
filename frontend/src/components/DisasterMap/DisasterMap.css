@@ -804,9 +804,9 @@
 ===================================================== */
 
 .user-location-marker {
-  width: 40px;
+  width: 18px;
 
-  height: 40px;
+  height: 18px;
 
   display: flex;
 
@@ -814,16 +814,14 @@
 
   justify-content: center;
 
-  font-size: 30px;
-
-  background: white;
+  background: #2563eb;
 
   border-radius: 50%;
 
-  border: 3px solid #2563eb;
+  border: 3px solid #ffffff;
 
   box-shadow:
-    0 3px 10px
+    0 2px 8px
       rgba(0, 0, 0, 0.25),
     0 0 0 5px
       rgba(37, 99, 235, 0.15);
@@ -1786,7 +1784,7 @@
 ===================================================== */
 
 .disaster-map-container {
-  height: 560px;
+  height: 520px;
   margin-top: 0;
   margin-bottom: 0;
 }
@@ -1850,12 +1848,165 @@
 
 /* ==========================================================
    CLEAN MAP VIEW
-   Hide map data overlays while keeping Leaflet controls.
+   Keep map markers and safety overlays visible.
 ========================================================== */
 
-.clean-map-view .leaflet-marker-pane,
-.clean-map-view .leaflet-shadow-pane,
-.clean-map-view .leaflet-overlay-pane {
-  display: none;
+
+/* ==========================================================
+   HOSPITAL MAP MARKER
+========================================================== */
+
+.hospital-location-marker {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #e53935;
+  color: #ffffff;
+  border: 3px solid #ffffff;
+  box-shadow: 0 2px 7px rgba(15, 23, 42, 0.25);
+  font-size: 21px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.user-location-marker span {
+  width: 8px;
+  height: 8px;
+  display: block;
+  border-radius: 50%;
+  background: #ffffff;
+}
+
+/* ==========================================================
+   COMPACT MAP TOOLBAR
+   Merge map status, safety range, weather and download
+   into one compact strip.
+========================================================== */
+
+.map-compact-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 42px;
+  padding: 6px 10px;
+  margin-bottom: 8px;
+  border: 1px solid #e4e8ee;
+  border-radius: 10px;
+  background: #ffffff;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+}
+
+.map-compact-toolbar .map-status {
+  min-height: 28px;
+  padding: 4px 8px;
+  border-radius: 7px;
+  white-space: nowrap;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.map-compact-toolbar .status-dot {
+  width: 7px;
+  height: 7px;
+}
+
+.map-toolbar-divider {
+  width: 1px;
+  height: 20px;
+  flex: 0 0 1px;
+  background: #e5e7eb;
+}
+
+.map-toolbar-range,
+.map-toolbar-weather {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  color: #596273;
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.map-toolbar-range strong {
+  color: #374151;
+}
+
+.map-toolbar-range-icon,
+.map-toolbar-weather-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+}
+
+.map-toolbar-weather {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.map-toolbar-weather > span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.map-compact-toolbar .map-download-button {
+  margin-left: auto;
+  min-height: 28px;
+  padding: 5px 9px;
+  border: 1px solid #d7dee8;
+  border-radius: 7px;
+  background: #f8fafc;
+  color: #475569;
+  box-shadow: none;
+  font-size: 10px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.map-compact-toolbar .map-download-button:hover:not(:disabled) {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.map-compact-toolbar .map-download-button:disabled {
+  opacity: 0.6;
+}
+
+.map-download-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 4px;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+@media (max-width: 768px) {
+  .map-compact-toolbar {
+    gap: 7px;
+    min-height: 40px;
+    padding: 5px 7px;
+    overflow-x: auto;
+  }
+
+  .map-compact-toolbar .map-status {
+    flex: 0 0 auto;
+  }
+
+  .map-toolbar-range,
+  .map-toolbar-weather {
+    flex: 0 0 auto;
+  }
+
+  .map-compact-toolbar .map-download-button {
+    margin-left: 0;
+    flex: 0 0 auto;
+  }
 }
 
