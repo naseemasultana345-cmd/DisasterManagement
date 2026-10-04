@@ -28,7 +28,7 @@ import "./DisasterMap.css";
 // =====================================================
 
 const TILE_URL =
-  "https://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png";
+  "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
 
 const SATELLITE_TILE_URL =
   "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
@@ -163,10 +163,9 @@ const safestIcon = L.divIcon({
 
   html: `
     <div class="safest-location-marker">
-      🛡️
+      🏠
     </div>
   `,
-
   iconSize: [
     44,
     44,

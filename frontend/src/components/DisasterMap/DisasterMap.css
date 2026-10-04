@@ -909,13 +909,13 @@
 
   border-radius: 50%;
 
-  border: 3px solid #7c3aed;
+  border: 3px solid #16a34a;
 
   box-shadow:
     0 3px 10px
       rgba(0, 0, 0, 0.25),
     0 0 0 4px
-      rgba(124, 58, 237, 0.12);
+      rgba(22, 163, 74, 0.12);
 }
 
 
@@ -1813,7 +1813,7 @@
   border-width: 3px;
   box-shadow:
     0 4px 12px rgba(0,0,0,.26),
-    0 0 0 6px rgba(124,58,237,.14);
+    0 0 0 6px rgba(22,163,74,.14);
 }
 
 
@@ -2010,3 +2010,36 @@
   }
 }
 
+
+/* ==========================================================
+   COMPACT ROUTE CARD
+   Keep route information visible without pushing the map down.
+========================================================== */
+
+.route-information {
+  margin: 8px 0;
+  padding: 12px 14px;
+}
+
+.route-information-header {
+  margin-bottom: 10px;
+}
+
+.route-title-icon {
+  width: 32px;
+  height: 32px;
+}
+
+.route-location {
+  min-height: 32px;
+}
+
+.route-marker {
+  width: 24px;
+  height: 24px;
+}
+
+.route-details {
+  margin-top: 10px;
+  padding-top: 10px;
+}
