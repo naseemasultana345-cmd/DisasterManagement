@@ -2924,7 +2924,7 @@ function DisasterMap({
           MAP
       ============================================== */}
 
-      <div className="disaster-map-container">
+      <div className="disaster-map-container clean-map-view">
 
         <MapContainer
 

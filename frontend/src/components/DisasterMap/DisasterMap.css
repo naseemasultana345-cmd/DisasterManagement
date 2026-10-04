@@ -1847,3 +1847,15 @@
     font-size: 29px;
   }
 }
+
+/* ==========================================================
+   CLEAN MAP VIEW
+   Hide map data overlays while keeping Leaflet controls.
+========================================================== */
+
+.clean-map-view .leaflet-marker-pane,
+.clean-map-view .leaflet-shadow-pane,
+.clean-map-view .leaflet-overlay-pane {
+  display: none;
+}
+
