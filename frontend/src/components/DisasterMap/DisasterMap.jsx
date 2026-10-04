@@ -1148,7 +1148,7 @@ const CachedLeafletTileLayer = L.TileLayer.extend({
     }
 
     const tileUrl = L.Util.template(
-      this.options.tileUrl,
+      this._url,
       coords
     );
 
