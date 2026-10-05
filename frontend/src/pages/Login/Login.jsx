@@ -306,8 +306,9 @@ function Login() {
     setSocialLoading("google");
 
     try {
-      const googleUrl =
-        `${OAUTH_BASE_URL}/api/auth/web/oauth/google`;
+      const googleUrl = Capacitor.isNativePlatform()
+        ? `${OAUTH_BASE_URL}/oauth2/authorization/google`
+        : `${OAUTH_BASE_URL}/api/auth/web/oauth/google`;
 
       if (Capacitor.isNativePlatform()) {
         await Browser.open({
@@ -337,8 +338,9 @@ function Login() {
     setSocialLoading("github");
 
     try {
-      const githubUrl =
-        `${OAUTH_BASE_URL}/api/auth/web/oauth/github`;
+      const githubUrl = Capacitor.isNativePlatform()
+        ? `${OAUTH_BASE_URL}/oauth2/authorization/github`
+        : `${OAUTH_BASE_URL}/api/auth/web/oauth/github`;
 
       if (Capacitor.isNativePlatform()) {
         await Browser.open({
