@@ -379,19 +379,18 @@ function MapController({
       const initialBounds =
         L.latLngBounds(points);
 
-      initialBounds.extend(
-        L.circle(
-          [
-            latitude,
-            longitude,
-          ],
-          {
-            radius:
-              MAX_LOCATION_DISTANCE_KM *
-              1000,
-          }
-        ).getBounds()
-      );
+      const radiusDegrees =
+        MAX_LOCATION_DISTANCE_KM / 111.32;
+
+      initialBounds.extend([
+        latitude - radiusDegrees,
+        longitude - radiusDegrees,
+      ]);
+
+      initialBounds.extend([
+        latitude + radiusDegrees,
+        longitude + radiusDegrees,
+      ]);
 
       map.fitBounds(
         initialBounds,
