@@ -1,5 +1,6 @@
 import {
   useEffect,
+  useRef,
   useState,
 } from "react";
 
@@ -37,6 +38,116 @@ function SOSButton() {
     message,
     setMessage,
   ] = useState("");
+
+  const [
+    holdProgress,
+    setHoldProgress,
+  ] = useState(0);
+
+  const holdTimerRef =
+    useRef(null);
+
+  const holdStartRef =
+    useRef(null);
+
+
+  // ================================================
+  // HOLD TO ACTIVATE SOS
+  // ================================================
+
+  const startSOSHold = () => {
+
+    if (sending) {
+      return;
+    }
+
+    if (holdTimerRef.current) {
+      clearInterval(
+        holdTimerRef.current
+      );
+    }
+
+    holdStartRef.current =
+      Date.now();
+
+    setHoldProgress(0);
+
+    holdTimerRef.current =
+      setInterval(() => {
+
+        const elapsed =
+          Date.now() -
+          holdStartRef.current;
+
+        const progress =
+          Math.min(
+            (elapsed / 3000) * 100,
+            100
+          );
+
+        setHoldProgress(
+          progress
+        );
+
+        if (progress >= 100) {
+
+          clearInterval(
+            holdTimerRef.current
+          );
+
+          holdTimerRef.current =
+            null;
+
+          holdStartRef.current =
+            null;
+
+          setHoldProgress(0);
+
+          setShowConfirm(true);
+
+        }
+
+      }, 50);
+
+  };
+
+
+  const cancelSOSHold = () => {
+
+    if (holdTimerRef.current) {
+
+      clearInterval(
+        holdTimerRef.current
+      );
+
+      holdTimerRef.current =
+        null;
+
+    }
+
+    holdStartRef.current =
+      null;
+
+    setHoldProgress(0);
+
+  };
+
+
+  useEffect(() => {
+
+    return () => {
+
+      if (holdTimerRef.current) {
+
+        clearInterval(
+          holdTimerRef.current
+        );
+
+      }
+
+    };
+
+  }, []);
 
 
   // ================================================
@@ -813,21 +924,35 @@ function SOSButton() {
             ? "sending"
             : ""
         }`}
-        onClick={() =>
-          setShowConfirm(true)
-        }
+        onPointerDown={startSOSHold}
+        onPointerUp={cancelSOSHold}
+        onPointerCancel={cancelSOSHold}
+        onPointerLeave={cancelSOSHold}
         disabled={sending}
       >
 
-        <span className="sos-button-icon">
-          🚨
-        </span>
+        <span
+          className="sos-hold-progress"
+          style={{
+            width: `${holdProgress}%`,
+          }}
+        />
 
-        <span>
+        <span className="sos-button-content">
 
-          {sending
-            ? "SENDING SOS..."
-            : "SEND SOS"}
+          <span className="sos-button-icon">
+            🚨
+          </span>
+
+          <span>
+
+            {sending
+              ? "SENDING SOS..."
+              : holdProgress > 0
+                ? "KEEP HOLDING..."
+                : "HOLD 3 SEC"}
+
+          </span>
 
         </span>
 

@@ -312,7 +312,7 @@ public class WeatherController {
 
 
         alert.setTitle(
-                "Heavy Rain Warning"
+                "Heavy Rain Detected"
         );
 
 

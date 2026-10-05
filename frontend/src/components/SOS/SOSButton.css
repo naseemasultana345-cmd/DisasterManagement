@@ -50,6 +50,9 @@
 ===================================================== */
 
 .sos-button {
+  position: relative;
+  overflow: hidden;
+
   width: 100%;
   min-height: 76px;
 
@@ -105,6 +108,32 @@
 .sos-button-icon {
   font-size: 28px;
   line-height: 1;
+}
+
+.sos-hold-progress {
+  position: absolute;
+  inset: 0 auto 0 0;
+
+  z-index: 0;
+
+  width: 0;
+
+  background: rgba(255, 255, 255, 0.22);
+
+  pointer-events: none;
+
+  transition: width 0.05s linear;
+}
+
+.sos-button-content {
+  position: relative;
+  z-index: 1;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 14px;
 }
 
 

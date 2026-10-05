@@ -376,32 +376,36 @@ function MapController({
         }
       );
 
-      if (points.length > 1) {
-        map.fitBounds(
-          L.latLngBounds(points),
-          {
-            padding: [
-              45,
-              45,
-            ],
-            maxZoom: offlineMode
-              ? 16
-              : 15,
-            animate: true,
-          }
-        );
-      } else {
-        map.flyTo(
+      const initialBounds =
+        L.latLngBounds(points);
+
+      initialBounds.extend(
+        L.circle(
           [
             latitude,
             longitude,
           ],
-          offlineMode ? 16 : 15,
           {
-            duration: 1.2,
+            radius:
+              MAX_LOCATION_DISTANCE_KM *
+              1000,
           }
-        );
-      }
+        ).getBounds()
+      );
+
+      map.fitBounds(
+        initialBounds,
+        {
+          padding: [
+            45,
+            45,
+          ],
+          maxZoom: offlineMode
+            ? 16
+            : 15,
+          animate: true,
+        }
+      );
 
       hasFittedInitialView.current =
         true;
@@ -2163,7 +2167,7 @@ function DisasterMap({
       );
 
       setRouteError(
-        "This location is outside the 2 KM safety range."
+        "This location is outside the 2 km safety range."
       );
 
       return;
@@ -2604,8 +2608,8 @@ function DisasterMap({
 
       mapStatusText =
         hasOfflineMap
-          ? "Online • Offline map available"
-          : "Online • Map connected";
+          ? "Offline map available"
+          : "Offline map not downloaded";
 
     } else {
 
@@ -2628,7 +2632,7 @@ function DisasterMap({
       ) {
 
         mapStatusText =
-          "Online • Downloading map...";
+          "Offline map downloading...";
 
       } else if (
 
@@ -2640,12 +2644,12 @@ function DisasterMap({
       ) {
 
         mapStatusText =
-          "Online • Offline map ready";
+          "Offline map ready";
 
       } else {
 
         mapStatusText =
-          "Online • Map connected";
+          "Offline map not downloaded";
 
       }
 
@@ -2771,7 +2775,7 @@ function DisasterMap({
           </span>
 
           <span>
-            <strong>2 KM</strong>
+            <strong>2 km</strong>
             {" "}
             safety range
           </span>
@@ -2824,7 +2828,7 @@ function DisasterMap({
             {downloadState ===
             "downloading"
               ? `Downloading ${downloadProgress}%`
-              : "Download 2 KM"}
+              : "Download 2 km"}
 
           </button>
 
@@ -2879,7 +2883,7 @@ function DisasterMap({
 
         <div className="map-download-success">
 
-          ✅ 2 KM offline map saved
+          ✅ 2 km offline map saved
           on this device.
 
         </div>
@@ -3268,7 +3272,7 @@ function DisasterMap({
           </Marker>
 
           {/* =========================================
-              2 KM CIRCLE
+              2 km circle
           ========================================== */}
 
           <Circle
@@ -3452,7 +3456,9 @@ function DisasterMap({
               HOSPITAL LOCATIONS
           ========================================== */}
 
-          <MarkerClusterGroup>
+          <MarkerClusterGroup
+            maxClusterRadius={100}
+          >
             {validHospitalLocations.map(
               (
                 hospital,
@@ -4126,7 +4132,7 @@ function DisasterMap({
 
               {" • "}
 
-              2 KM coverage
+              2 km coverage
 
             </small>
 

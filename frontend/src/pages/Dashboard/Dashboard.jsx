@@ -337,7 +337,10 @@ const normalizeWeather = (data) => {
         source.wind,
         source.windKph,
         source.windSpeedKph,
-        wind.speed
+        wind.speed !== undefined &&
+        wind.speed !== null
+          ? Number(wind.speed) * 3.6
+          : null
       ),
       null
     ),
@@ -1538,6 +1541,10 @@ export default function Dashboard() {
     }
   };
 
+  const notificationCount =
+    (alert?.active ? 1 : 0) +
+    (weather ? 1 : 0);
+
   // ==========================================================
   // WEATHER ICON
   // ==========================================================
@@ -1673,7 +1680,9 @@ export default function Dashboard() {
             <span className="connection-dot" />
 
             {online
-              ? "Online • Live GPS"
+              ? location
+                ? "Online • Live GPS"
+                : "Online • GPS searching…"
               : "Offline • Cached Data"}
           </div>
         </div>
@@ -1733,6 +1742,11 @@ export default function Dashboard() {
             }
           >
             Notifications
+            {notificationCount > 0 && (
+              <span className="notification-badge">
+                {notificationCount}
+              </span>
+            )}
           </button>
         </nav>
 
@@ -2152,6 +2166,11 @@ export default function Dashboard() {
           >
             <CircleAlert size={19} />
             Notifications
+            {notificationCount > 0 && (
+              <span className="notification-badge">
+                {notificationCount}
+              </span>
+            )}
           </button>
 
           <button
@@ -2234,7 +2253,7 @@ export default function Dashboard() {
                   <span>•</span>
 
                   <span>
-                    {alert.location}
+                    {weather?.city || alert.location}
                   </span>
 
                   <span>•</span>
@@ -2245,7 +2264,7 @@ export default function Dashboard() {
                   </span>
 
                   <span>
-                    - Seek shelter immediately
+                    • Seek shelter immediately
                   </span>
                 </div>
 
@@ -2264,6 +2283,19 @@ export default function Dashboard() {
             </section>
           )}
 
+        {alert &&
+          alert.active &&
+          !showAlert && (
+            <button
+              type="button"
+              className="active-alert-indicator"
+              onClick={() => setShowAlert(true)}
+            >
+              <CircleAlert size={15} />
+              <span>1 active alert</span>
+            </button>
+          )}
+
         {/* MAIN GRID */}
 
         <section
@@ -2275,31 +2307,9 @@ export default function Dashboard() {
           <div className="map-section-card">
             <div className="map-toolbar">
               <div className="risk-control">
-                <label>
-                  <input
-                    type="checkbox"
-                    defaultChecked
-                  />
-
-                  <span>
-                    Live Flood Risk
-                  </span>
-                </label>
-
-                <div className="risk-row">
-                  <span className="risk-color high" />
-                  High Risk
-                </div>
-
-                <div className="risk-row">
-                  <span className="risk-color medium" />
-                  Moderate Risk
-                </div>
-
-                <div className="risk-row">
-                  <span className="risk-color low" />
-                  Low Risk
-                </div>
+                <span>
+                  No flood data for this area
+                </span>
               </div>
             </div>
 
@@ -2383,14 +2393,6 @@ export default function Dashboard() {
 
                     <span>
                       Hospital
-                    </span>
-                  </div>
-
-                  <div className="legend-item">
-                    <span className="legend-risk" />
-
-                    <span>
-                      Flood Risk Zone
                     </span>
                   </div>
 
@@ -2568,9 +2570,7 @@ export default function Dashboard() {
                         <div className="shelter-bottom">
                           <div className="shelter-tags">
                             <span className="beds-tag">
-                              {shelter.beds ||
-                                0}{" "}
-                              beds available
+                              Safe shelter
                             </span>
 
                             <span className="elevation-tag">
@@ -2657,13 +2657,9 @@ export default function Dashboard() {
             </div>
 
             <div className="quick-dial-grid">
-              <button
+              <a
                 className="emergency-card red"
-                onClick={() =>
-                  callNumber(
-                    EMERGENCY_NUMBERS.emergency
-                  )
-                }
+                href="tel:112"
               >
                 <div className="emergency-icon">
                   <Phone size={28} />
@@ -2677,16 +2673,14 @@ export default function Dashboard() {
                   <small>
                     All Emergencies
                   </small>
-                </div>
-              </button>
 
-              <button
+                  <small className="emergency-call-label">Call</small>
+                </div>
+              </a>
+
+              <a
                 className="emergency-card orange"
-                onClick={() =>
-                  callNumber(
-                    EMERGENCY_NUMBERS.fire
-                  )
-                }
+                href="tel:101"
               >
                 <div className="emergency-icon">
                   <Flame size={29} />
@@ -2702,16 +2696,14 @@ export default function Dashboard() {
                   <small>
                     Fire & Rescue
                   </small>
-                </div>
-              </button>
 
-              <button
+                  <small className="emergency-call-label">Call</small>
+                </div>
+              </a>
+
+              <a
                 className="emergency-card white"
-                onClick={() =>
-                  callNumber(
-                    EMERGENCY_NUMBERS.ambulance
-                  )
-                }
+                href="tel:108"
               >
                 <div className="emergency-icon ambulance">
                   <Ambulance size={28} />
@@ -2725,16 +2717,14 @@ export default function Dashboard() {
                   <small>
                     Medical Emergency
                   </small>
-                </div>
-              </button>
 
-              <button
+                  <small className="emergency-call-label">Call</small>
+                </div>
+              </a>
+
+              <a
                 className="emergency-card white"
-                onClick={() =>
-                  callNumber(
-                    EMERGENCY_NUMBERS.police
-                  )
-                }
+                href="tel:100"
               >
                 <div className="emergency-icon police">
                   <Shield size={28} />
@@ -2748,8 +2738,10 @@ export default function Dashboard() {
                   <small>
                     Law & Order
                   </small>
+
+                  <small className="emergency-call-label">Call</small>
                 </div>
-              </button>
+              </a>
             </div>
           </div>
 
@@ -2769,7 +2761,14 @@ export default function Dashboard() {
 
               <span>
                 {weather?.updatedAt
-                  ? `Updated ${weather.updatedAt}`
+                  ? `Updated ${new Date(
+                      Number(weather.updatedAt) < 10000000000
+                        ? Number(weather.updatedAt) * 1000
+                        : Number(weather.updatedAt)
+                    ).toLocaleTimeString("en-IN", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}`
                   : "Live data"}
               </span>
             </div>
@@ -2877,9 +2876,9 @@ export default function Dashboard() {
                       Number.isFinite(
                         Number(weather.visibility)
                       )
-                        ? `${Number(
+                        ? `${(Number(
                             weather.visibility
-                          ).toFixed(1)} km`
+                          ) / 1000).toFixed(0)} km`
                         : "—"}
                     </strong>
                   </div>
@@ -2915,7 +2914,7 @@ export default function Dashboard() {
                   accuracy <= 0 ||
                   accuracy > 50000
                 ) {
-                  return "Accuracy unavailable";
+                  return "unavailable";
                 }
 
                 return `±${Math.round(
