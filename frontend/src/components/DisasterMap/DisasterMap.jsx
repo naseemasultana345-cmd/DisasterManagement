@@ -2607,7 +2607,7 @@ function DisasterMap({
 
       mapStatusText =
         hasOfflineMap
-          ? "Offline map available"
+          ? "Offline map downloaded"
           : "Offline map not downloaded";
 
     } else {
@@ -2643,7 +2643,7 @@ function DisasterMap({
       ) {
 
         mapStatusText =
-          "Offline map ready";
+          "Offline map downloaded";
 
       } else {
 

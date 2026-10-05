@@ -17,6 +17,7 @@ import {
   Ambulance,
   CheckCircle2,
   CircleAlert,
+  Cloud,
   CloudRain,
   Droplets,
   Flame,
@@ -35,6 +36,7 @@ import {
   Settings,
   Shield,
   ShieldAlert,
+  Sun,
   Thermometer,
   User,
   Wind,
@@ -1556,16 +1558,33 @@ export default function Dashboard() {
     if (
       condition.includes("rain") ||
       condition.includes("shower") ||
-      condition.includes("storm")
+      condition.includes("storm") ||
+      condition.includes("thunder")
     ) {
       return <CloudRain size={54} />;
     }
 
-    if (condition.includes("wind")) {
+    if (
+      condition.includes("wind")
+    ) {
       return <Wind size={54} />;
     }
 
-    return <CloudRain size={54} />;
+    if (
+      condition.includes("cloud") ||
+      condition.includes("overcast")
+    ) {
+      return <Cloud size={54} />;
+    }
+
+    if (
+      condition.includes("clear") ||
+      condition.includes("sunny")
+    ) {
+      return <Sun size={54} />;
+    }
+
+    return <Cloud size={54} />;
   };
 
   // ==========================================================
@@ -1680,9 +1699,21 @@ export default function Dashboard() {
             <span className="connection-dot" />
 
             {online
-              ? location
-                ? "Online • Live GPS"
-                : "Online • GPS searching…"
+              ? (() => {
+                  const accuracy = Number(
+                    location?.accuracy
+                  );
+
+                  const gpsReady =
+                    location &&
+                    Number.isFinite(accuracy) &&
+                    accuracy > 0 &&
+                    accuracy <= 50000;
+
+                  return gpsReady
+                    ? "Online • Live GPS"
+                    : "Online • GPS accuracy unavailable";
+                })()
               : "Offline • Cached Data"}
           </div>
         </div>
@@ -2239,6 +2270,7 @@ export default function Dashboard() {
             <section
               id="dashboard-alerts"
               className="disaster-alert-banner"
+              aria-live="assertive"
             >
               <div className="alert-icon">
                 {getAlertIcon()}
@@ -2258,7 +2290,11 @@ export default function Dashboard() {
 
                   <span>•</span>
 
-                  <span>
+                  <span
+                    className={`alert-severity alert-severity-${String(
+                      alert.severity || ""
+                    ).toLowerCase()}`}
+                  >
                     Severity:{" "}
                     {alert.severity}
                   </span>
@@ -2570,7 +2606,12 @@ export default function Dashboard() {
                         <div className="shelter-bottom">
                           <div className="shelter-tags">
                             <span className="beds-tag">
-                              Safe shelter
+                              {String(
+                                shelter.type || ""
+                              ).trim().toLowerCase() ===
+                              "hospital"
+                                ? "Hospital"
+                                : "Safe shelter"}
                             </span>
 
                             <span className="elevation-tag">
@@ -2660,6 +2701,7 @@ export default function Dashboard() {
               <a
                 className="emergency-card red"
                 href="tel:112"
+                aria-label="Call Emergency Services 112"
               >
                 <div className="emergency-icon">
                   <Phone size={28} />
@@ -2679,8 +2721,9 @@ export default function Dashboard() {
               </a>
 
               <a
-                className="emergency-card orange"
+                className="emergency-card white"
                 href="tel:101"
+                aria-label="Call Fire Services 101"
               >
                 <div className="emergency-icon">
                   <Flame size={29} />
@@ -2704,6 +2747,7 @@ export default function Dashboard() {
               <a
                 className="emergency-card white"
                 href="tel:108"
+                aria-label="Call Ambulance 108"
               >
                 <div className="emergency-icon ambulance">
                   <Ambulance size={28} />
@@ -2725,6 +2769,7 @@ export default function Dashboard() {
               <a
                 className="emergency-card white"
                 href="tel:100"
+                aria-label="Call Police 100"
               >
                 <div className="emergency-icon police">
                   <Shield size={28} />
@@ -2859,7 +2904,7 @@ export default function Dashboard() {
                         ? `${Number(
                             weather.windSpeed
                           ).toFixed(1)} km/h`
-                        : "—"}
+                        : "N/A"}
                     </strong>
                   </div>
 
@@ -2891,7 +2936,7 @@ export default function Dashboard() {
         {/* STATUS */}
 
         <section className="dashboard-status-row">
-          <div className="status-item">
+          <div className="status-item status-success">
             <CheckCircle2 size={17} />
 
             <span>
@@ -2899,7 +2944,21 @@ export default function Dashboard() {
             </span>
           </div>
 
-          <div className="status-item">
+          <div
+            className={`status-item ${
+              (() => {
+                const accuracy = Number(
+                  location?.accuracy
+                );
+
+                return Number.isFinite(accuracy) &&
+                  accuracy > 0 &&
+                  accuracy <= 50000
+                  ? "status-success"
+                  : "status-warning";
+              })()
+            }`}
+          >
             <Navigation size={17} />
 
             <span>
@@ -2924,7 +2983,7 @@ export default function Dashboard() {
             </span>
           </div>
 
-          <div className="status-item">
+          <div className="status-item status-success">
             <Shield size={17} />
 
             <span>
